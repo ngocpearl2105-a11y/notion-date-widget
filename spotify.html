@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Notion Aesthetic Spotify Widget</title>
+  <title>Notion Aesthetic Spotify Player</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -34,21 +34,46 @@
       align-items: center;
       justify-content: center;
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      padding: 4px;
+      padding: 6px;
       overflow: hidden;
     }
 
     .player-card {
+      position: relative;
       width: 100%;
       max-width: 320px;
       background: var(--bg-card);
       border-radius: var(--card-radius);
       padding: 14px;
       color: var(--text-main);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
       display: flex;
       flex-direction: column;
       gap: 12px;
+    }
+
+    /* Nút Cài đặt (Bánh răng) tinh tế */
+    .settings-btn {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      width: 28px;
+      height: 28px;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      color: #ffffff;
+      cursor: pointer;
+      z-index: 5;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+    .settings-btn:hover {
+      transform: scale(1.1);
+      background: rgba(0, 0, 0, 0.85);
     }
 
     /* Khung ảnh Manga/Anime */
@@ -58,7 +83,7 @@
       aspect-ratio: 1 / 1;
       border-radius: 10px;
       overflow: hidden;
-      background: #282828;
+      background: #242424;
     }
 
     .cover-img {
@@ -66,49 +91,59 @@
       height: 100%;
       object-fit: cover;
       filter: grayscale(100%) contrast(110%);
+      transition: filter 0.3s ease;
     }
 
-    /* Icon Spotify góc trên bên phải ảnh */
+    /* Logo Spotify góc trên bên phải */
     .spotify-badge {
       position: absolute;
       top: 10px;
       right: 10px;
-      width: 26px;
-      height: 26px;
-      background: rgba(0, 0, 0, 0.7);
+      width: 28px;
+      height: 28px;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       text-decoration: none;
+      z-index: 4;
       transition: transform 0.2s ease;
     }
-    .spotify-badge:hover {
-      transform: scale(1.1);
-    }
+    .spotify-badge:hover { transform: scale(1.12); }
     .spotify-badge svg {
-      width: 16px;
-      height: 16px;
+      width: 18px;
+      height: 18px;
       fill: #ffffff;
     }
 
-    /* Thông tin bài hát & Tim */
+    /* Thông tin bài hát */
     .song-info {
       display: flex;
       align-items: center;
       justify-content: space-between;
       margin-top: 2px;
     }
+    .song-title-group {
+      overflow: hidden;
+      cursor: pointer;
+    }
     .song-title {
       font-size: 15px;
       font-weight: 700;
       color: var(--text-main);
-      letter-spacing: -0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .artist-name {
       font-size: 13px;
       color: var(--text-sub);
       margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .heart-btn {
       background: none;
@@ -122,9 +157,9 @@
       transition: transform 0.15s ease;
     }
     .heart-btn:hover { transform: scale(1.15); }
-    .heart-btn.liked svg { fill: #ffffff; }
+    .heart-btn.liked svg { fill: #ffffff; stroke: #ffffff; }
 
-    /* Thanh tiến trình (Progress Bar) */
+    /* Thanh tiến trình */
     .progress-section {
       display: flex;
       flex-direction: column;
@@ -139,7 +174,7 @@
       position: relative;
     }
     .progress-fill {
-      width: 15%;
+      width: 18%;
       height: 100%;
       background: var(--progress-fill);
       border-radius: 2px;
@@ -164,12 +199,12 @@
       color: var(--text-sub);
     }
 
-    /* Bộ điều khiển (Controls) */
+    /* Bộ điều khiển */
     .controls {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 0 6px;
+      padding: 0 4px;
     }
     .ctrl-btn {
       background: none;
@@ -183,8 +218,8 @@
     }
     .ctrl-btn:hover { color: var(--text-main); }
     .play-btn {
-      width: 38px;
-      height: 38px;
+      width: 40px;
+      height: 40px;
       background: #ffffff;
       border-radius: 50%;
       color: #000000;
@@ -197,13 +232,13 @@
       color: #000000;
     }
 
-    /* Danh sách bài hát (Tracklist) */
+    /* Tracklist */
     .tracklist {
       border-top: 1px solid rgba(255, 255, 255, 0.1);
       padding-top: 8px;
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 3px;
     }
     .track-item {
       display: flex;
@@ -221,48 +256,158 @@
       align-items: center;
       gap: 8px;
       color: var(--text-main);
+      overflow: hidden;
     }
     .track-num {
       color: var(--text-sub);
       font-size: 11px;
       width: 14px;
     }
-    .track-artist {
+    .track-item-title {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .track-artist { color: var(--text-sub); }
+    .dots-menu { color: var(--text-sub); font-size: 12px; }
+
+    /* =========================================================
+       MODAL CÀI ĐẶT
+       ========================================================= */
+    .modal-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(18, 18, 18, 0.96);
+      backdrop-filter: blur(8px);
+      border-radius: var(--card-radius);
+      z-index: 100;
+      padding: 16px;
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      animation: fadeIn 0.2s ease;
+    }
+    .modal-overlay.active { display: flex; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.97); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      padding-bottom: 8px;
+    }
+    .modal-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--text-sub);
+      font-size: 18px;
+      cursor: pointer;
+    }
+    .close-btn:hover { color: #ffffff; }
+
+    .modal-body {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 8px 0;
+      overflow-y: auto;
+    }
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .input-group label {
+      font-size: 11px;
+      font-weight: 600;
       color: var(--text-sub);
     }
-    .dots-menu {
-      color: var(--text-sub);
+    .input-group input {
+      background: #2a2a2a;
+      border: 1px solid #3e3e3e;
+      border-radius: 6px;
+      color: #ffffff;
+      padding: 6px 8px;
       font-size: 12px;
-      letter-spacing: 1px;
+      font-family: inherit;
+      outline: none;
     }
+    .input-group input:focus { border-color: #ffffff; }
+
+    .modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      padding-top: 8px;
+      gap: 6px;
+    }
+    .btn-save {
+      background: #ffffff;
+      color: #000000;
+      border: none;
+      border-radius: 6px;
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-save:hover { transform: scale(1.04); }
+    .btn-reset {
+      background: none;
+      color: #e05656;
+      border: none;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .btn-reset:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
 
-  <!-- Audio phát nhạc lofi thư giãn trực tiếp -->
+  <!-- Audio lofi chill -->
   <audio id="audioPlayer" loop src="https://stream.zeno.fm/f3wvbbqmdg8uv"></audio>
 
   <div class="player-card">
-    <!-- Ảnh bìa Anime/Manga kèm logo Spotify -->
+    <!-- Nút Bánh răng Cài đặt -->
+    <button class="settings-btn" id="openSettingsBtn" title="Tùy chỉnh Playlist, Tên bài, Ảnh">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+    </button>
+
+    <!-- Khung Ảnh bìa Anime & Logo Spotify -->
     <div class="cover-container">
-      <img class="cover-img" id="coverImg" src="https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=600&auto=format&fit=crop&q=80" alt="Album Cover">
-      <a class="spotify-badge" href="https://open.spotify.com" target="_blank" title="Mở Spotify">
+      <img class="cover-img" id="coverImg" src="https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=600&auto=format&fit=crop&q=80" alt="Cover">
+      <a class="spotify-badge" id="spotifyLink" href="https://open.spotify.com" target="_blank" title="Mở trên Spotify">
         <svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.503 17.315c-.218.358-.68.472-1.038.254-2.846-1.74-6.428-2.134-10.65-1.168-.41.094-.816-.164-.91-.574-.094-.41.164-.816.574-.91 4.62-1.055 8.57-.614 11.77 1.36.358.218.472.68.254 1.038zm1.47-3.265c-.275.448-.86.59-1.308.315-3.26-2.003-8.23-2.584-12.083-1.414-.505.153-1.04-.135-1.193-.64-.153-.505.135-1.04.64-1.193 4.397-1.334 9.877-.69 13.63 1.624.448.275.59.86.315 1.308zm.126-3.41c-3.91-2.322-10.354-2.535-14.086-1.402-.6.182-1.237-.16-1.42-.76-.182-.6.16-1.237.76-1.42 4.29-1.302 11.41-1.055 15.918 1.62.54.32.716 1.02.395 1.56-.32.54-1.02.716-1.56.395z"/></svg>
       </a>
     </div>
 
-    <!-- Tên bài hát & nút Thả tim -->
+    <!-- Thông tin bài hát -->
     <div class="song-info">
-      <div>
+      <div class="song-title-group" id="titleGroup" title="Bấm để mở playlist trên Spotify">
         <div class="song-title" id="songTitle">Lofi Beats</div>
         <div class="artist-name" id="artistName">chill</div>
       </div>
-      <button class="heart-btn" id="heartBtn" title="Like">
+      <button class="heart-btn" id="heartBtn" title="Thả tim">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
       </button>
     </div>
 
-    <!-- Thanh tiến trình phát -->
+    <!-- Thanh tiến trình -->
     <div class="progress-section">
       <div class="progress-bar-container" id="progressBar">
         <div class="progress-fill" id="progressFill"><span class="progress-knob"></span></div>
@@ -273,7 +418,7 @@
       </div>
     </div>
 
-    <!-- Cụm nút điều khiển -->
+    <!-- Nút điều khiển -->
     <div class="controls">
       <button class="ctrl-btn" title="Shuffle"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg></button>
       <button class="ctrl-btn" id="prevBtn" title="Previous"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2"></line></svg></button>
@@ -284,24 +429,89 @@
       <button class="ctrl-btn" title="Repeat"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg></button>
     </div>
 
-    <!-- Danh sách bài hát (Tracklist) -->
+    <!-- Danh sách bài hát -->
     <div class="tracklist">
       <div class="track-item" onclick="switchTrack('Lofi Beats', 'chill')">
-        <div class="track-left"><span class="track-num">1</span><span>Lofi Beats</span><span class="track-artist">- chill</span></div>
+        <div class="track-left"><span class="track-num">1</span><span class="track-item-title">Lofi Beats</span><span class="track-artist">- chill</span></div>
         <span class="dots-menu">•••</span>
       </div>
       <div class="track-item" onclick="switchTrack('Midnight Study', 'lofi girl')">
-        <div class="track-left"><span class="track-num">2</span><span>Midnight Study</span><span class="track-artist">- lofi girl</span></div>
+        <div class="track-left"><span class="track-num">2</span><span class="track-item-title">Midnight Study</span><span class="track-artist">- lofi girl</span></div>
         <span class="dots-menu">•••</span>
       </div>
       <div class="track-item" onclick="switchTrack('Coffee & Rain', 'aesthetic')">
-        <div class="track-left"><span class="track-num">3</span><span>Coffee & Rain</span><span class="track-artist">- aesthetic</span></div>
+        <div class="track-left"><span class="track-num">3</span><span class="track-item-title">Coffee & Rain</span><span class="track-artist">- aesthetic</span></div>
         <span class="dots-menu">•••</span>
+      </div>
+    </div>
+
+    <!-- BẢNG CÀI ĐẶT CHO USER TỰ ĐỔI DỮ LIỆU -->
+    <div class="modal-overlay" id="settingsModal">
+      <div class="modal-header">
+        <div class="modal-title">⚙️ Cài đặt Widget</div>
+        <button class="close-btn" id="closeSettingsBtn">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="input-group">
+          <label>Link Playlist Spotify của bạn:</label>
+          <input type="text" id="inputSpotifyUrl" placeholder="https://open.spotify.com/playlist/...">
+        </div>
+        <div class="input-group">
+          <label>Tên bài hát / Tiêu đề:</label>
+          <input type="text" id="inputSongTitle" placeholder="VD: Lofi Beats">
+        </div>
+        <div class="input-group">
+          <label>Tên nghệ sĩ / Tác giả:</label>
+          <input type="text" id="inputArtistName" placeholder="VD: chill">
+        </div>
+        <div class="input-group">
+          <label>Link ảnh bìa Anime/Manga (tùy chọn):</label>
+          <input type="text" id="inputCoverUrl" placeholder="Dán link ảnh online...">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-reset" id="resetBtn">Về mặc định</button>
+        <button class="btn-save" id="saveBtn">Lưu thay đổi</button>
       </div>
     </div>
   </div>
 
   <script>
+    const DEFAULT_CONFIG = {
+      spotifyUrl: 'https://open.spotify.com',
+      title: 'Lofi Beats',
+      artist: 'chill',
+      cover: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=600&auto=format&fit=crop&q=80'
+    };
+
+    function loadConfig() {
+      try {
+        const saved = localStorage.getItem('notion_spotify_widget_cfg');
+        return saved ? JSON.parse(saved) : DEFAULT_CONFIG;
+      } catch (e) {
+        return DEFAULT_CONFIG;
+      }
+    }
+
+    function applyConfig(cfg) {
+      document.getElementById('songTitle').textContent = cfg.title || DEFAULT_CONFIG.title;
+      document.getElementById('artistName').textContent = cfg.artist || DEFAULT_CONFIG.artist;
+      document.getElementById('spotifyLink').href = cfg.spotifyUrl || DEFAULT_CONFIG.spotifyUrl;
+      document.getElementById('coverImg').src = cfg.cover || DEFAULT_CONFIG.cover;
+
+      document.getElementById('titleGroup').onclick = () => {
+        if (cfg.spotifyUrl && cfg.spotifyUrl !== '#') {
+          window.open(cfg.spotifyUrl, '_blank');
+        }
+      };
+    }
+
+    let config = loadConfig();
+    applyConfig(config);
+
+    // Audio & Controls
     const audio = document.getElementById('audioPlayer');
     const playBtn = document.getElementById('playBtn');
     const playIcon = document.getElementById('playIcon');
@@ -311,7 +521,6 @@
     let isPlaying = false;
     let timer = 3;
 
-    // Nút Play / Pause
     playBtn.addEventListener('click', () => {
       if (isPlaying) {
         audio.pause();
@@ -324,7 +533,6 @@
       }
     });
 
-    // Cập nhật tiến trình chạy giả lập nếu stream online
     setInterval(() => {
       if (isPlaying) {
         timer++;
@@ -336,18 +544,54 @@
       }
     }, 1000);
 
-    // Nút Like
-    heartBtn.addEventListener('click', () => {
-      heartBtn.classList.toggle('liked');
-    });
+    heartBtn.addEventListener('click', () => heartBtn.classList.toggle('liked'));
 
-    // Đổi bài khi click danh sách
     function switchTrack(title, artist) {
       document.getElementById('songTitle').textContent = title;
       document.getElementById('artistName').textContent = artist;
       timer = 0;
       if (!isPlaying) playBtn.click();
     }
+
+    // Modal Events
+    const modal = document.getElementById('settingsModal');
+    const openBtn = document.getElementById('openSettingsBtn');
+    const closeBtn = document.getElementById('closeSettingsBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    openBtn.addEventListener('click', () => {
+      document.getElementById('inputSpotifyUrl').value = config.spotifyUrl || '';
+      document.getElementById('inputSongTitle').value = config.title || '';
+      document.getElementById('inputArtistName').value = config.artist || '';
+      document.getElementById('inputCoverUrl').value = config.cover || '';
+      modal.classList.add('active');
+    });
+
+    closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+
+    saveBtn.addEventListener('click', () => {
+      config = {
+        spotifyUrl: document.getElementById('inputSpotifyUrl').value.trim() || DEFAULT_CONFIG.spotifyUrl,
+        title: document.getElementById('inputSongTitle').value.trim() || DEFAULT_CONFIG.title,
+        artist: document.getElementById('inputArtistName').value.trim() || DEFAULT_CONFIG.artist,
+        cover: document.getElementById('inputCoverUrl').value.trim() || DEFAULT_CONFIG.cover
+      };
+      try {
+        localStorage.setItem('notion_spotify_widget_cfg', JSON.stringify(config));
+      } catch (e) {}
+      applyConfig(config);
+      modal.classList.remove('active');
+    });
+
+    resetBtn.addEventListener('click', () => {
+      try {
+        localStorage.removeItem('notion_spotify_widget_cfg');
+      } catch (e) {}
+      config = { ...DEFAULT_CONFIG };
+      applyConfig(config);
+      modal.classList.remove('active');
+    });
   </script>
 </body>
 </html>
