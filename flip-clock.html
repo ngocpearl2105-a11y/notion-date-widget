@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notion Aesthetic Flip Clock</title>
+  <!-- Font số chuẩn retro-modern Bebas Neue & font chữ Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* =========================================================
+       1. CẤU HÌNH THEME (LIGHT / DARK MODE)
+       - Light Mode mặc định: Đồng hồ màu ĐEN, chữ TRẮNG (như ảnh 1)
+       - Dark Mode: Đồng hồ đổi thành màu TRẮNG, chữ ĐEN
+       ========================================================= */
+    :root {
+      /* Mặc định trên nền Notion Light */
+      --card-bg: #0d0d0d;
+      --text-color: #ffffff;
+      --slit-line: rgba(255, 255, 255, 0.15);
+      --slit-shadow: rgba(0, 0, 0, 0.45);
+      --card-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+    }
+
+    /* Tự động kích hoạt khi thiết bị / Notion chuyển sang Dark Mode */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --card-bg: #ffffff;
+        --text-color: #0d0d0d;
+        --slit-line: rgba(0, 0, 0, 0.12);
+        --slit-shadow: rgba(0, 0, 0, 0.06);
+        --card-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+      }
+    }
+
+    /* Các class ép theme cố định (qua URL param hoặc click toggle) */
+    body.force-light {
+      --card-bg: #0d0d0d !important;
+      --text-color: #ffffff !important;
+      --slit-line: rgba(255, 255, 255, 0.15) !important;
+      --slit-shadow: rgba(0, 0, 0, 0.45) !important;
+      --card-shadow: 0 4px 14px rgba(0, 0, 0, 0.16) !important;
+    }
+
+    body.force-dark {
+      --card-bg: #ffffff !important;
+      --text-color: #0d0d0d !important;
+      --slit-line: rgba(0, 0, 0, 0.12) !important;
+      --slit-shadow: rgba(0, 0, 0, 0.06) !important;
+      --card-shadow: 0 4px 14px rgba(0, 0, 0, 0.28) !important;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: transparent !important; /* Trong suốt để ăn khớp hoàn toàn với nền Notion */
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Bebas Neue', Impact, 'Arial Black', sans-serif;
+    }
+
+    /* =========================================================
+       2. RESPONSIVE CONTAINER (Container Queries)
+       Tự động phóng to/thu nhỏ tỷ lệ theo khung Notion bạn kéo
+       ========================================================= */
+    .clock-wrapper {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+      container-type: inline-size;
+      cursor: pointer;
+    }
+
+    .clock-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3.5cqw;
+      width: 100%;
+      max-width: 480px;
+      aspect-ratio: 1.55 / 1;
+    }
+
+    /* Thẻ lật đồng hồ */
+    .card {
+      position: relative;
+      background: var(--card-bg);
+      border-radius: clamp(8px, 4.5cqw, 20px);
+      box-shadow: var(--card-shadow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    /* Rãnh cắt ngang giữa thẻ (Split slit) */
+    .card::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: var(--slit-line);
+      box-shadow: 0 1px 1px var(--slit-shadow);
+      z-index: 2;
+    }
+
+    /* Chữ số giờ / phút */
+    .digit {
+      font-size: 38cqw;
+      line-height: 1;
+      color: var(--text-color);
+      letter-spacing: 0.02em;
+      z-index: 1;
+      margin-top: 1cqw;
+      transition: color 0.25s ease;
+    }
+
+    /* Chữ phụ (AM/PM và Thứ) */
+    .sub-text {
+      position: absolute;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: clamp(8px, 3.8cqw, 15px);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--text-color);
+      z-index: 3;
+      transition: color 0.25s ease;
+    }
+
+    /* Thẻ trái: AM/PM ở góc dưới bên trái */
+    .am-pm {
+      bottom: clamp(6px, 3.2cqw, 14px);
+      left: clamp(8px, 4cqw, 16px);
+    }
+
+    /* Thẻ phải: Tên thứ ở góc dưới bên phải */
+    .day-name {
+      bottom: clamp(6px, 3.2cqw, 14px);
+      right: clamp(8px, 4cqw, 16px);
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="clock-wrapper" id="clockWidget" title="Nhấp vào đồng hồ để chuyển chế độ Sáng / Tối">
+    <div class="clock-grid">
+      <!-- Thẻ Giờ -->
+      <div class="card">
+        <span class="digit" id="hours">10</span>
+        <span class="sub-text am-pm" id="ampm">AM</span>
+      </div>
+      <!-- Thẻ Phút -->
+      <div class="card">
+        <span class="digit" id="minutes">23</span>
+        <span class="sub-text day-name" id="day">FRIDAY</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 1. Tự động lấy giờ và thứ theo timezone của máy người dùng
+    function updateClock() {
+      const now = new Date();
+
+      let rawHours = now.getHours();
+      const minutes = now.getMinutes();
+      const ampm = rawHours >= 12 ? 'PM' : 'AM';
+
+      // Định dạng 12 giờ (0 đổi thành 12)
+      let hours = rawHours % 12;
+      hours = hours ? hours : 12;
+
+      // Đảm bảo luôn có 2 chữ số (VD: 09, 10, ...)
+      const hoursStr = String(hours).padStart(2, '0');
+      const minutesStr = String(minutes).padStart(2, '0');
+
+      // Danh sách thứ trong tuần bằng tiếng Anh (định dạng aesthetic)
+      const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+      const dayStr = days[now.getDay()];
+
+      document.getElementById('hours').textContent = hoursStr;
+      document.getElementById('minutes').textContent = minutesStr;
+      document.getElementById('ampm').textContent = ampm;
+      document.getElementById('day').textContent = dayStr;
+    }
+
+    // 2. Xử lý Dark / Light mode linh hoạt
+    const urlParams = new URLSearchParams(window.location.search);
+    const themeParam = urlParams.get('theme'); // Hỗ trợ ?theme=light hoặc ?theme=dark
+
+    if (themeParam === 'light') {
+      document.body.classList.add('force-light');
+    } else if (themeParam === 'dark') {
+      document.body.classList.add('force-dark');
+    }
+
+    // Thêm tính năng chạm/click trực tiếp vào đồng hồ để đổi màu thủ công
+    document.getElementById('clockWidget').addEventListener('click', () => {
+      const isSystemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const currentDark = document.body.classList.contains('force-dark') || 
+                          (!document.body.classList.contains('force-light') && isSystemDark);
+
+      if (currentDark) {
+        document.body.classList.remove('force-dark');
+        document.body.classList.add('force-light');
+      } else {
+        document.body.classList.remove('force-light');
+        document.body.classList.add('force-dark');
+      }
+    });
+
+    // Chạy đồng hồ ngay lập tức và cập nhật mỗi 1 giây
+    updateClock();
+    setInterval(updateClock, 1000);
+  </script>
+</body>
+</html>
