@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Notion Aesthetic Flip Clock</title>
-  <!-- Font số chuẩn retro-modern Bebas Neue & font chữ Inter -->
+  <title>Notion Aesthetic 3D Flip Clock</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@600;700;800&display=swap" rel="stylesheet">
@@ -18,51 +17,48 @@
     }
 
     /* =========================================================
-       1. CẤU HÌNH THEME (LIGHT / DARK MODE)
-       - Light Mode mặc định: Đồng hồ màu ĐEN, chữ TRẮNG (như ảnh 1)
-       - Dark Mode: Đồng hồ đổi thành màu TRẮNG, chữ ĐEN
+       1. THEME MÀU SẮC (LIGHT / DARK MODE)
        ========================================================= */
     :root {
-      /* Mặc định trên nền Notion Light */
+      /* Mặc định: Nền card màu ĐEN, chữ TRẮNG */
       --card-bg: #0d0d0d;
       --text-color: #ffffff;
       --slit-line: rgba(255, 255, 255, 0.15);
-      --slit-shadow: rgba(0, 0, 0, 0.45);
-      --card-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+      --slit-shadow: rgba(0, 0, 0, 0.65);
+      --card-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
     }
 
-    /* Tự động kích hoạt khi thiết bị / Notion chuyển sang Dark Mode */
     @media (prefers-color-scheme: dark) {
       :root {
+        /* Khi sang Dark mode: Nền card màu TRẮNG, chữ ĐEN */
         --card-bg: #ffffff;
         --text-color: #0d0d0d;
         --slit-line: rgba(0, 0, 0, 0.12);
-        --slit-shadow: rgba(0, 0, 0, 0.06);
-        --card-shadow: 0 4px 14px rgba(0, 0, 0, 0.28);
+        --slit-shadow: rgba(0, 0, 0, 0.08);
+        --card-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
       }
     }
 
-    /* Các class ép theme cố định (qua URL param hoặc click toggle) */
     body.force-light {
       --card-bg: #0d0d0d !important;
       --text-color: #ffffff !important;
       --slit-line: rgba(255, 255, 255, 0.15) !important;
-      --slit-shadow: rgba(0, 0, 0, 0.45) !important;
-      --card-shadow: 0 4px 14px rgba(0, 0, 0, 0.16) !important;
+      --slit-shadow: rgba(0, 0, 0, 0.65) !important;
+      --card-shadow: 0 6px 18px rgba(0, 0, 0, 0.25) !important;
     }
 
     body.force-dark {
       --card-bg: #ffffff !important;
       --text-color: #0d0d0d !important;
       --slit-line: rgba(0, 0, 0, 0.12) !important;
-      --slit-shadow: rgba(0, 0, 0, 0.06) !important;
-      --card-shadow: 0 4px 14px rgba(0, 0, 0, 0.28) !important;
+      --slit-shadow: rgba(0, 0, 0, 0.08) !important;
+      --card-shadow: 0 6px 18px rgba(0, 0, 0, 0.3) !important;
     }
 
     html, body {
       width: 100%;
       height: 100%;
-      background: transparent !important; /* Trong suốt để ăn khớp hoàn toàn với nền Notion */
+      background: transparent !important;
       overflow: hidden;
       display: flex;
       align-items: center;
@@ -70,17 +66,14 @@
       font-family: 'Bebas Neue', Impact, 'Arial Black', sans-serif;
     }
 
-    /* =========================================================
-       2. RESPONSIVE CONTAINER (Container Queries)
-       Tự động phóng to/thu nhỏ tỷ lệ theo khung Notion bạn kéo
-       ========================================================= */
+    /* Container co giãn linh hoạt theo Notion Embed block */
     .clock-wrapper {
       width: 100%;
       height: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 4px;
+      padding: 6px;
       container-type: inline-size;
       cursor: pointer;
     }
@@ -94,39 +87,75 @@
       aspect-ratio: 1.55 / 1;
     }
 
-    /* Thẻ lật đồng hồ */
+    /* =========================================================
+       2. CẤU TRÚC LẬT 3D (3D FLIP MECHANISM)
+       ========================================================= */
     .card {
       position: relative;
-      background: var(--card-bg);
+      perspective: 800px;
+      -webkit-perspective: 800px;
       border-radius: clamp(8px, 4.5cqw, 20px);
       box-shadow: var(--card-shadow);
+    }
+
+    .card-half {
+      position: absolute;
+      left: 0;
+      right: 0;
+      overflow: hidden;
+      background: var(--card-bg);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      transition: background-color 0.25s ease;
+    }
+
+    .card-half.top {
+      top: 0;
+      height: 50%;
+      border-radius: clamp(8px, 4.5cqw, 20px) clamp(8px, 4.5cqw, 20px) 0 0;
+      transform-origin: bottom center;
+      border-bottom: 0.5px solid var(--slit-line);
+    }
+
+    .card-half.bottom {
+      bottom: 0;
+      height: 50%;
+      border-radius: 0 0 clamp(8px, 4.5cqw, 20px) clamp(8px, 4.5cqw, 20px);
+      transform-origin: top center;
+      border-top: 0.5px solid var(--slit-shadow);
+    }
+
+    /* Căn chỉnh số to tràn qua cả 2 nửa trên và dưới */
+    .card-half.top .digit {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 200%;
       display: flex;
       align-items: center;
       justify-content: center;
-      overflow: hidden;
-      transition: background-color 0.25s ease, color 0.25s ease;
-    }
-
-    /* Rãnh cắt ngang giữa thẻ (Split slit) */
-    .card::before {
-      content: "";
-      position: absolute;
-      top: 50%;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: var(--slit-line);
-      box-shadow: 0 1px 1px var(--slit-shadow);
-      z-index: 2;
-    }
-
-    /* Chữ số giờ / phút */
-    .digit {
       font-size: 38cqw;
       line-height: 1;
       color: var(--text-color);
       letter-spacing: 0.02em;
-      z-index: 1;
+      margin-top: 1cqw;
+      transition: color 0.25s ease;
+    }
+
+    .card-half.bottom .digit {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 200%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 38cqw;
+      line-height: 1;
+      color: var(--text-color);
+      letter-spacing: 0.02em;
       margin-top: 1cqw;
       transition: color 0.25s ease;
     }
@@ -139,80 +168,211 @@
       font-weight: 700;
       letter-spacing: 0.08em;
       color: var(--text-color);
-      z-index: 3;
+      z-index: 10;
       transition: color 0.25s ease;
     }
 
-    /* Thẻ trái: AM/PM ở góc dưới bên trái */
     .am-pm {
       bottom: clamp(6px, 3.2cqw, 14px);
       left: clamp(8px, 4cqw, 16px);
     }
 
-    /* Thẻ phải: Tên thứ ở góc dưới bên phải */
     .day-name {
       bottom: clamp(6px, 3.2cqw, 14px);
       right: clamp(8px, 4cqw, 16px);
       text-transform: uppercase;
     }
+
+    /* Thứ tự phân lớp các cánh lật */
+    .static.top { z-index: 1; }
+    .static.bottom { z-index: 1; }
+    .flap-bottom { z-index: 2; transform: rotateX(90deg); }
+    .flap-top { z-index: 3; transform: rotateX(0deg); }
+
+    /* Lớp phủ bóng đổ (Shading) khi lá bài lật qua góc ánh sáng */
+    .card-half::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease;
+    }
+
+    /* =========================================================
+       3. ANIMATION LẬT 3D & ĐỔ BÓNG
+       ========================================================= */
+    .card.flipping .flap-top {
+      animation: flip-down-top 0.3s cubic-bezier(0.37, 0, 0.63, 1) forwards;
+    }
+
+    .card.flipping .flap-top::after {
+      background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
+      animation: shadow-in 0.3s ease-in forwards;
+    }
+
+    .card.flipping .flap-bottom {
+      animation: flip-down-bottom 0.3s cubic-bezier(0.15, 0.45, 0.28, 1) 0.28s forwards;
+    }
+
+    .card.flipping .flap-bottom::after {
+      background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
+      animation: shadow-out 0.3s ease-out 0.28s forwards;
+    }
+
+    @keyframes flip-down-top {
+      0% { transform: rotateX(0deg); }
+      100% { transform: rotateX(-90deg); }
+    }
+
+    @keyframes flip-down-bottom {
+      0% { transform: rotateX(90deg); }
+      100% { transform: rotateX(0deg); }
+    }
+
+    @keyframes shadow-in {
+      0% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+
+    @keyframes shadow-out {
+      0% { opacity: 1; }
+      100% { opacity: 0; }
+    }
   </style>
 </head>
 <body>
 
-  <div class="clock-wrapper" id="clockWidget" title="Nhấp vào đồng hồ để chuyển chế độ Sáng / Tối">
+  <div class="clock-wrapper" id="clockWidget" title="Nhấp 1 lần để test lật số | Nhấp đúp để đổi sáng/tối">
     <div class="clock-grid">
       <!-- Thẻ Giờ -->
-      <div class="card">
-        <span class="digit" id="hours">10</span>
-        <span class="sub-text am-pm" id="ampm">AM</span>
+      <div class="card" id="cardHours">
+        <div class="card-half top static"><div class="digit">10</div></div>
+        <div class="card-half bottom static">
+          <div class="digit">10</div>
+          <span class="sub-text am-pm">AM</span>
+        </div>
+        <div class="card-half top flap-top"><div class="digit">10</div></div>
+        <div class="card-half bottom flap-bottom">
+          <div class="digit">10</div>
+          <span class="sub-text am-pm">AM</span>
+        </div>
       </div>
+
       <!-- Thẻ Phút -->
-      <div class="card">
-        <span class="digit" id="minutes">23</span>
-        <span class="sub-text day-name" id="day">FRIDAY</span>
+      <div class="card" id="cardMinutes">
+        <div class="card-half top static"><div class="digit">23</div></div>
+        <div class="card-half bottom static">
+          <div class="digit">23</div>
+          <span class="sub-text day-name">FRIDAY</span>
+        </div>
+        <div class="card-half top flap-top"><div class="digit">23</div></div>
+        <div class="card-half bottom flap-bottom">
+          <div class="digit">23</div>
+          <span class="sub-text day-name">FRIDAY</span>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
-    // 1. Tự động lấy giờ và thứ theo timezone của máy người dùng
-    function updateClock() {
-      const now = new Date();
+    let currentHours = '';
+    let currentMinutes = '';
 
+    // Hàm xử lý lật thẻ 3D
+    function flipCard(cardEl, newValue, subSelector, subValue) {
+      const topStatic = cardEl.querySelector('.top.static .digit');
+      const bottomStatic = cardEl.querySelector('.bottom.static .digit');
+      const flapTop = cardEl.querySelector('.flap-top');
+      const flapBottom = cardEl.querySelector('.flap-bottom');
+      const flapTopDigit = flapTop.querySelector('.digit');
+      const flapBottomDigit = flapBottom.querySelector('.digit');
+
+      const currentValue = bottomStatic.textContent;
+      if (currentValue === newValue && !cardEl.dataset.forceFlip) return;
+      delete cardEl.dataset.forceFlip;
+
+      // Cập nhật chữ phụ (AM/PM hoặc Thứ)
+      if (subSelector && subValue) {
+        cardEl.querySelectorAll(subSelector).forEach(el => el.textContent = subValue);
+      }
+
+      // Nạp giá trị cho các lớp trước và sau
+      topStatic.textContent = newValue;
+      flapTopDigit.textContent = currentValue;
+      flapBottomDigit.textContent = newValue;
+      bottomStatic.textContent = currentValue;
+
+      // Kích hoạt lại animation mượt mà
+      cardEl.classList.remove('flipping');
+      void cardEl.offsetWidth; // Force CSS reflow
+      cardEl.classList.add('flipping');
+
+      const handleAnimEnd = (e) => {
+        if (e.target === flapBottom) {
+          bottomStatic.textContent = newValue;
+          flapTopDigit.textContent = newValue;
+          cardEl.classList.remove('flipping');
+          flapBottom.removeEventListener('animationend', handleAnimEnd);
+        }
+      };
+      flapBottom.addEventListener('animationend', handleAnimEnd);
+    }
+
+    // Lấy thời gian từ máy tính user và cập nhật
+    function updateTime(force = false) {
+      const now = new Date();
       let rawHours = now.getHours();
       const minutes = now.getMinutes();
       const ampm = rawHours >= 12 ? 'PM' : 'AM';
 
-      // Định dạng 12 giờ (0 đổi thành 12)
       let hours = rawHours % 12;
       hours = hours ? hours : 12;
 
-      // Đảm bảo luôn có 2 chữ số (VD: 09, 10, ...)
       const hoursStr = String(hours).padStart(2, '0');
       const minutesStr = String(minutes).padStart(2, '0');
 
-      // Danh sách thứ trong tuần bằng tiếng Anh (định dạng aesthetic)
       const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
       const dayStr = days[now.getDay()];
 
-      document.getElementById('hours').textContent = hoursStr;
-      document.getElementById('minutes').textContent = minutesStr;
-      document.getElementById('ampm').textContent = ampm;
-      document.getElementById('day').textContent = dayStr;
+      const cardHours = document.getElementById('cardHours');
+      const cardMinutes = document.getElementById('cardMinutes');
+
+      if (force || currentHours === '') {
+        cardHours.dataset.forceFlip = 'true';
+        cardMinutes.dataset.forceFlip = 'true';
+      }
+
+      if (hoursStr !== currentHours || force) {
+        flipCard(cardHours, hoursStr, '.am-pm', ampm);
+        currentHours = hoursStr;
+      }
+
+      if (minutesStr !== currentMinutes || force) {
+        flipCard(cardMinutes, minutesStr, '.day-name', dayStr);
+        currentMinutes = minutesStr;
+      }
     }
 
-    // 2. Xử lý Dark / Light mode linh hoạt
+    // Xử lý tham số theme từ URL (?theme=light hoặc ?theme=dark)
     const urlParams = new URLSearchParams(window.location.search);
-    const themeParam = urlParams.get('theme'); // Hỗ trợ ?theme=light hoặc ?theme=dark
+    const themeParam = urlParams.get('theme');
+    if (themeParam === 'light') document.body.classList.add('force-light');
+    if (themeParam === 'dark') document.body.classList.add('force-dark');
 
-    if (themeParam === 'light') {
-      document.body.classList.add('force-light');
-    } else if (themeParam === 'dark') {
-      document.body.classList.add('force-dark');
-    }
+    // Tương tác chuột
+    const widget = document.getElementById('clockWidget');
+    
+    // Nhấp 1 lần: kích hoạt lật số tức thì để test
+    widget.addEventListener('click', () => {
+      updateTime(true);
+    });
 
-    // Thêm tính năng chạm/click trực tiếp vào đồng hồ để đổi màu thủ công
-    document.getElementById('clockWidget').addEventListener('click', () => {
+    // Nhấp đúp (Double click): Đổi qua lại giữa màu Sáng / Tối
+    widget.addEventListener('dblclick', () => {
       const isSystemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
       const currentDark = document.body.classList.contains('force-dark') || 
                           (!document.body.classList.contains('force-light') && isSystemDark);
@@ -226,9 +386,9 @@
       }
     });
 
-    // Chạy đồng hồ ngay lập tức và cập nhật mỗi 1 giây
-    updateClock();
-    setInterval(updateClock, 1000);
+    // Chạy khởi động sau 150ms để mắt thấy rõ nhịp lật đầu tiên
+    setTimeout(() => updateTime(true), 150);
+    setInterval(() => updateTime(false), 1000);
   </script>
 </body>
 </html>
