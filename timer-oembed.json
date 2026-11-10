@@ -1,0 +1,10 @@
+{
+  "version": "1.0",
+  "type": "rich",
+  "provider_name": "Notion Focus Timer",
+  "provider_url": "https://ngocpearl2105-a11y.github.io/notion-date-widget/",
+  "title": "Focus Timer Widget",
+  "width": 340,
+  "height": 460,
+  "html": "<iframe src=\"https://ngocpearl2105-a11y.github.io/notion-date-widget/timer.html\" width=\"100%\" height=\"460\" style=\"border:0; overflow:hidden;\" allowfullscreen></iframe>"
+}
