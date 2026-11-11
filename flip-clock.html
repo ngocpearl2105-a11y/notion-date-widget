@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Notion Aesthetic 3D Flip Clock</title>
+  <title>Notion Aesthetic Flip Clock</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@500;600;700;800&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -16,43 +16,23 @@
       -webkit-user-select: none;
     }
 
-    /* =========================================================
-       1. THEME MÀU SẮC (LIGHT / DARK MODE)
-       ========================================================= */
+    /* DEFAULT RESPONSIVE THEME (No shadow, clean border) */
     :root {
-      /* Mặc định: Nền card màu ĐEN, chữ TRẮNG */
+      /* Light Mode Default: Black card, White text */
       --card-bg: #0d0d0d;
       --text-color: #ffffff;
+      --border-color: rgba(0, 0, 0, 0.15);
       --slit-line: rgba(255, 255, 255, 0.15);
-      --slit-shadow: rgba(0, 0, 0, 0.65);
-      --card-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
     }
 
     @media (prefers-color-scheme: dark) {
       :root {
-        /* Khi sang Dark mode: Nền card màu TRẮNG, chữ ĐEN */
+        /* Dark Mode Default: White card, Black text */
         --card-bg: #ffffff;
         --text-color: #0d0d0d;
+        --border-color: rgba(255, 255, 255, 0.2);
         --slit-line: rgba(0, 0, 0, 0.12);
-        --slit-shadow: rgba(0, 0, 0, 0.08);
-        --card-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
       }
-    }
-
-    body.force-light {
-      --card-bg: #0d0d0d !important;
-      --text-color: #ffffff !important;
-      --slit-line: rgba(255, 255, 255, 0.15) !important;
-      --slit-shadow: rgba(0, 0, 0, 0.65) !important;
-      --card-shadow: 0 6px 18px rgba(0, 0, 0, 0.25) !important;
-    }
-
-    body.force-dark {
-      --card-bg: #ffffff !important;
-      --text-color: #0d0d0d !important;
-      --slit-line: rgba(0, 0, 0, 0.12) !important;
-      --slit-shadow: rgba(0, 0, 0, 0.08) !important;
-      --card-shadow: 0 6px 18px rgba(0, 0, 0, 0.3) !important;
     }
 
     html, body {
@@ -66,16 +46,43 @@
       font-family: 'Bebas Neue', Impact, 'Arial Black', sans-serif;
     }
 
-    /* Container co giãn linh hoạt theo Notion Embed block */
     .clock-wrapper {
+      position: relative;
       width: 100%;
       height: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 6px;
+      padding: 4px;
       container-type: inline-size;
+    }
+
+    /* Settings Gear Button (Shows on hover) */
+    .settings-btn {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 26px;
+      height: 26px;
+      background: rgba(128, 128, 128, 0.25);
+      backdrop-filter: blur(4px);
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: var(--text-color);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
+      z-index: 20;
+      opacity: 0;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .clock-wrapper:hover .settings-btn {
+      opacity: 1;
+    }
+    .settings-btn:hover {
+      transform: scale(1.1);
+      background: rgba(128, 128, 128, 0.45);
     }
 
     .clock-grid {
@@ -85,17 +92,17 @@
       width: 100%;
       max-width: 480px;
       aspect-ratio: 1.55 / 1;
+      cursor: pointer;
     }
 
-    /* =========================================================
-       2. CẤU TRÚC LẬT 3D (3D FLIP MECHANISM)
-       ========================================================= */
+    /* 3D Flip Card - NO SHADOW, BORDER ONLY */
     .card {
       position: relative;
       perspective: 800px;
       -webkit-perspective: 800px;
       border-radius: clamp(8px, 4.5cqw, 20px);
-      box-shadow: var(--card-shadow);
+      border: 1px solid var(--border-color);
+      box-shadow: none !important;
     }
 
     .card-half {
@@ -112,7 +119,7 @@
     .card-half.top {
       top: 0;
       height: 50%;
-      border-radius: clamp(8px, 4.5cqw, 20px) clamp(8px, 4.5cqw, 20px) 0 0;
+      border-radius: clamp(7px, 4.3cqw, 19px) clamp(7px, 4.3cqw, 19px) 0 0;
       transform-origin: bottom center;
       border-bottom: 0.5px solid var(--slit-line);
     }
@@ -120,32 +127,14 @@
     .card-half.bottom {
       bottom: 0;
       height: 50%;
-      border-radius: 0 0 clamp(8px, 4.5cqw, 20px) clamp(8px, 4.5cqw, 20px);
+      border-radius: 0 0 clamp(7px, 4.3cqw, 19px) clamp(7px, 4.3cqw, 19px);
       transform-origin: top center;
-      border-top: 0.5px solid var(--slit-shadow);
+      border-top: 0.5px solid var(--slit-line);
     }
 
-    /* Căn chỉnh số to tràn qua cả 2 nửa trên và dưới */
-    .card-half.top .digit {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 200%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 38cqw;
-      line-height: 1;
-      color: var(--text-color);
-      letter-spacing: 0.02em;
-      margin-top: 1cqw;
-      transition: color 0.25s ease;
-    }
-
+    .card-half.top .digit,
     .card-half.bottom .digit {
       position: absolute;
-      bottom: 0;
       left: 0;
       width: 100%;
       height: 200%;
@@ -159,11 +148,12 @@
       margin-top: 1cqw;
       transition: color 0.25s ease;
     }
+    .card-half.top .digit { top: 0; }
+    .card-half.bottom .digit { bottom: 0; }
 
-    /* Chữ phụ (AM/PM và Thứ) */
     .sub-text {
       position: absolute;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
       font-size: clamp(8px, 3.8cqw, 15px);
       font-weight: 700;
       letter-spacing: 0.08em;
@@ -183,72 +173,133 @@
       text-transform: uppercase;
     }
 
-    /* Thứ tự phân lớp các cánh lật */
     .static.top { z-index: 1; }
     .static.bottom { z-index: 1; }
     .flap-bottom { z-index: 2; transform: rotateX(90deg); }
     .flap-top { z-index: 3; transform: rotateX(0deg); }
 
-    /* Lớp phủ bóng đổ (Shading) khi lá bài lật qua góc ánh sáng */
-    .card-half::after {
-      content: "";
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.25s ease;
-    }
-
-    /* =========================================================
-       3. ANIMATION LẬT 3D & ĐỔ BÓNG
-       ========================================================= */
     .card.flipping .flap-top {
       animation: flip-down-top 0.3s cubic-bezier(0.37, 0, 0.63, 1) forwards;
     }
-
-    .card.flipping .flap-top::after {
-      background: linear-gradient(to top, rgba(0,0,0,0.6), transparent);
-      animation: shadow-in 0.3s ease-in forwards;
-    }
-
     .card.flipping .flap-bottom {
       animation: flip-down-bottom 0.3s cubic-bezier(0.15, 0.45, 0.28, 1) 0.28s forwards;
-    }
-
-    .card.flipping .flap-bottom::after {
-      background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent);
-      animation: shadow-out 0.3s ease-out 0.28s forwards;
     }
 
     @keyframes flip-down-top {
       0% { transform: rotateX(0deg); }
       100% { transform: rotateX(-90deg); }
     }
-
     @keyframes flip-down-bottom {
       0% { transform: rotateX(90deg); }
       100% { transform: rotateX(0deg); }
     }
 
-    @keyframes shadow-in {
-      0% { opacity: 0; }
-      100% { opacity: 1; }
+    /* =========================================================
+       SETTINGS MODAL (ENGLISH)
+       ========================================================= */
+    .modal-overlay {
+      position: fixed;
+      inset: 4px;
+      background: rgba(18, 18, 18, 0.96);
+      backdrop-filter: blur(8px);
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      z-index: 100;
+      padding: 12px 14px;
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      font-family: 'Inter', sans-serif;
+      color: #ffffff;
+    }
+    .modal-overlay.active { display: flex; }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      padding-bottom: 6px;
+    }
+    .modal-title { font-size: 12px; font-weight: 700; }
+    .close-btn {
+      background: none; border: none; color: #a7a7a7;
+      font-size: 16px; cursor: pointer;
+    }
+    .close-btn:hover { color: #ffffff; }
+
+    .modal-body {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 6px 0;
+    }
+    .color-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .color-row label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #cccccc;
+    }
+    .color-inputs {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .color-inputs input[type="color"] {
+      width: 24px;
+      height: 24px;
+      border: none;
+      border-radius: 4px;
+      background: none;
+      cursor: pointer;
+    }
+    .color-inputs input[type="text"] {
+      width: 72px;
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 5px;
+      color: #fff;
+      padding: 4px 6px;
+      font-size: 11px;
+      font-family: monospace;
     }
 
-    @keyframes shadow-out {
-      0% { opacity: 1; }
-      100% { opacity: 0; }
+    .modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      padding-top: 6px;
+      gap: 6px;
     }
+    .btn-group { display: flex; gap: 6px; }
+    .btn-action {
+      border: none;
+      border-radius: 5px;
+      padding: 5px 10px;
+      font-size: 10.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-save { background: #ffffff; color: #000000; }
+    .btn-copy { background: #333333; color: #ffffff; border: 1px solid #555; }
+    .btn-reset { background: none; color: #e05656; border: none; font-size: 10.5px; cursor: pointer; }
   </style>
 </head>
 <body>
 
-  <div class="clock-wrapper" id="clockWidget" title="Nhấp 1 lần để test lật số | Nhấp đúp để đổi sáng/tối">
-    <div class="clock-grid">
-      <!-- Thẻ Giờ -->
+  <div class="clock-wrapper" id="clockWidget">
+    <button class="settings-btn" id="openSettingsBtn" title="Customize Colors">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+    </button>
+
+    <div class="clock-grid" id="clockGrid" title="Click to test flip animation">
+      <!-- Hours Card -->
       <div class="card" id="cardHours">
         <div class="card-half top static"><div class="digit">10</div></div>
         <div class="card-half bottom static">
@@ -262,7 +313,7 @@
         </div>
       </div>
 
-      <!-- Thẻ Phút -->
+      <!-- Minutes Card -->
       <div class="card" id="cardMinutes">
         <div class="card-half top static"><div class="digit">23</div></div>
         <div class="card-half bottom static">
@@ -276,13 +327,151 @@
         </div>
       </div>
     </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+      <div class="modal-header">
+        <div class="modal-title">⚙️ Clock Settings</div>
+        <button class="close-btn" id="closeSettingsBtn">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="color-row">
+          <label>Card Background:</label>
+          <div class="color-inputs">
+            <input type="color" id="pickerBg" value="#0d0d0d">
+            <input type="text" id="hexBg" value="#0d0d0d" maxlength="7">
+          </div>
+        </div>
+        <div class="color-row">
+          <label>Text & Numbers:</label>
+          <div class="color-inputs">
+            <input type="color" id="pickerText" value="#ffffff">
+            <input type="text" id="hexText" value="#ffffff" maxlength="7">
+          </div>
+        </div>
+        <div class="color-row">
+          <label>Border Color:</label>
+          <div class="color-inputs">
+            <input type="color" id="pickerBorder" value="#262626">
+            <input type="text" id="hexBorder" value="#262626" maxlength="7">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-reset" id="resetBtn" title="Restore Auto Dark/Light Responsive">Auto Responsive</button>
+        <div class="btn-group">
+          <button class="btn-action btn-copy" id="copyUrlBtn" title="Copy URL with colors for Notion Template">📋 Copy Template URL</button>
+          <button class="btn-action btn-save" id="saveBtn">Save</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
+    const STORAGE_KEY = 'notion_flip_clock_theme_v1';
+    const urlParams = new URLSearchParams(window.location.search);
+
+    function normalizeHex(val) {
+      if (!val) return null;
+      val = val.trim().replace(/^#/, '');
+      if (/^[0-9A-Fa-f]{6}$/.test(val)) return '#' + val;
+      return null;
+    }
+
+    // Priority: 1. Local user override -> 2. URL Template Params (?bg=&text=&border=) -> 3. Auto Device Responsive
+    function loadTheme() {
+      let saved = null;
+      try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) {}
+
+      const urlBg = normalizeHex(urlParams.get('bg'));
+      const urlText = normalizeHex(urlParams.get('text'));
+      const urlBorder = normalizeHex(urlParams.get('border'));
+
+      const active = saved || ((urlBg || urlText) ? { bg: urlBg, text: urlText, border: urlBorder } : null);
+
+      const root = document.documentElement;
+      if (active && active.bg && active.text) {
+        root.style.setProperty('--card-bg', active.bg);
+        root.style.setProperty('--text-color', active.text);
+        root.style.setProperty('--border-color', active.border || active.text + '33');
+        root.style.setProperty('--slit-line', active.text + '26');
+        return active;
+      } else {
+        root.style.removeProperty('--card-bg');
+        root.style.removeProperty('--text-color');
+        root.style.removeProperty('--border-color');
+        root.style.removeProperty('--slit-line');
+        return null;
+      }
+    }
+
+    let currentTheme = loadTheme();
+
+    // Sync color pickers & hex inputs
+    function bindColorPair(pickerId, hexId) {
+      const picker = document.getElementById(pickerId);
+      const hex = document.getElementById(hexId);
+      picker.addEventListener('input', () => hex.value = picker.value);
+      hex.addEventListener('input', () => {
+        if (/^#[0-9A-Fa-f]{6}$/.test(hex.value)) picker.value = hex.value;
+      });
+    }
+    bindColorPair('pickerBg', 'hexBg');
+    bindColorPair('pickerText', 'hexText');
+    bindColorPair('pickerBorder', 'hexBorder');
+
+    const modal = document.getElementById('settingsModal');
+    document.getElementById('openSettingsBtn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const computed = getComputedStyle(document.documentElement);
+      const bg = (currentTheme && currentTheme.bg) || '#0d0d0d';
+      const text = (currentTheme && currentTheme.text) || '#ffffff';
+      const border = (currentTheme && currentTheme.border) || '#262626';
+
+      document.getElementById('pickerBg').value = bg;
+      document.getElementById('hexBg').value = bg;
+      document.getElementById('pickerText').value = text;
+      document.getElementById('hexText').value = text;
+      document.getElementById('pickerBorder').value = border;
+      document.getElementById('hexBorder').value = border;
+      modal.classList.add('active');
+    });
+
+    document.getElementById('closeSettingsBtn').addEventListener('click', () => modal.classList.remove('active'));
+
+    document.getElementById('saveBtn').addEventListener('click', () => {
+      const cfg = {
+        bg: normalizeHex(document.getElementById('hexBg').value) || '#0d0d0d',
+        text: normalizeHex(document.getElementById('hexText').value) || '#ffffff',
+        border: normalizeHex(document.getElementById('hexBorder').value) || '#262626'
+      };
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg)); } catch (e) {}
+      currentTheme = loadTheme();
+      modal.classList.remove('active');
+    });
+
+    document.getElementById('copyUrlBtn').addEventListener('click', () => {
+      const bg = (normalizeHex(document.getElementById('hexBg').value) || '#0d0d0d').replace('#', '');
+      const text = (normalizeHex(document.getElementById('hexText').value) || '#ffffff').replace('#', '');
+      const border = (normalizeHex(document.getElementById('hexBorder').value) || '#262626').replace('#', '');
+      const baseUrl = window.location.origin + window.location.pathname;
+      const fullUrl = `${baseUrl}?bg=${bg}&text=${text}&border=${border}`;
+      navigator.clipboard.writeText(fullUrl);
+      const btn = document.getElementById('copyUrlBtn');
+      btn.textContent = '✓ Copied URL!';
+      setTimeout(() => btn.textContent = '📋 Copy Template URL', 1800);
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+      currentTheme = loadTheme();
+      modal.classList.remove('active');
+    });
+
+    // Flip Clock Logic
     let currentHours = '';
     let currentMinutes = '';
 
-    // Hàm xử lý lật thẻ 3D
     function flipCard(cardEl, newValue, subSelector, subValue) {
       const topStatic = cardEl.querySelector('.top.static .digit');
       const bottomStatic = cardEl.querySelector('.bottom.static .digit');
@@ -295,20 +484,17 @@
       if (currentValue === newValue && !cardEl.dataset.forceFlip) return;
       delete cardEl.dataset.forceFlip;
 
-      // Cập nhật chữ phụ (AM/PM hoặc Thứ)
       if (subSelector && subValue) {
         cardEl.querySelectorAll(subSelector).forEach(el => el.textContent = subValue);
       }
 
-      // Nạp giá trị cho các lớp trước và sau
       topStatic.textContent = newValue;
       flapTopDigit.textContent = currentValue;
       flapBottomDigit.textContent = newValue;
       bottomStatic.textContent = currentValue;
 
-      // Kích hoạt lại animation mượt mà
       cardEl.classList.remove('flipping');
-      void cardEl.offsetWidth; // Force CSS reflow
+      void cardEl.offsetWidth;
       cardEl.classList.add('flipping');
 
       const handleAnimEnd = (e) => {
@@ -322,19 +508,16 @@
       flapBottom.addEventListener('animationend', handleAnimEnd);
     }
 
-    // Lấy thời gian từ máy tính user và cập nhật
     function updateTime(force = false) {
       const now = new Date();
       let rawHours = now.getHours();
       const minutes = now.getMinutes();
       const ampm = rawHours >= 12 ? 'PM' : 'AM';
-
       let hours = rawHours % 12;
       hours = hours ? hours : 12;
 
       const hoursStr = String(hours).padStart(2, '0');
       const minutesStr = String(minutes).padStart(2, '0');
-
       const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
       const dayStr = days[now.getDay()];
 
@@ -350,43 +533,13 @@
         flipCard(cardHours, hoursStr, '.am-pm', ampm);
         currentHours = hoursStr;
       }
-
       if (minutesStr !== currentMinutes || force) {
         flipCard(cardMinutes, minutesStr, '.day-name', dayStr);
         currentMinutes = minutesStr;
       }
     }
 
-    // Xử lý tham số theme từ URL (?theme=light hoặc ?theme=dark)
-    const urlParams = new URLSearchParams(window.location.search);
-    const themeParam = urlParams.get('theme');
-    if (themeParam === 'light') document.body.classList.add('force-light');
-    if (themeParam === 'dark') document.body.classList.add('force-dark');
-
-    // Tương tác chuột
-    const widget = document.getElementById('clockWidget');
-    
-    // Nhấp 1 lần: kích hoạt lật số tức thì để test
-    widget.addEventListener('click', () => {
-      updateTime(true);
-    });
-
-    // Nhấp đúp (Double click): Đổi qua lại giữa màu Sáng / Tối
-    widget.addEventListener('dblclick', () => {
-      const isSystemDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const currentDark = document.body.classList.contains('force-dark') || 
-                          (!document.body.classList.contains('force-light') && isSystemDark);
-
-      if (currentDark) {
-        document.body.classList.remove('force-dark');
-        document.body.classList.add('force-light');
-      } else {
-        document.body.classList.remove('force-light');
-        document.body.classList.add('force-dark');
-      }
-    });
-
-    // Chạy khởi động sau 150ms để mắt thấy rõ nhịp lật đầu tiên
+    document.getElementById('clockGrid').addEventListener('click', () => updateTime(true));
     setTimeout(() => updateTime(true), 150);
     setInterval(() => updateTime(false), 1000);
   </script>
