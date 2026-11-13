@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notion Healing Podcast Player</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* DEFAULT RESPONSIVE THEME (No shadow, border only) */
+    :root {
+      /* Light Mode Default: Dark Charcoal Card, White Text */
+      --bg-card: #333333;
+      --text-main: #ffffff;
+      --text-sub: rgba(255, 255, 255, 0.72);
+      --border-color: rgba(0, 0, 0, 0.16);
+      --bar-bg: rgba(255, 255, 255, 0.24);
+      --bar-fill: #ffffff;
+      --card-radius: 14px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        /* Dark Mode Default: White Card, Black Text */
+        --bg-card: #ffffff;
+        --text-main: #141414;
+        --text-sub: rgba(20, 20, 20, 0.65);
+        --border-color: rgba(255, 255, 255, 0.22);
+        --bar-bg: rgba(0, 0, 0, 0.14);
+        --bar-fill: #141414;
+      }
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: transparent !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      padding: 4px;
+      overflow: hidden;
+    }
+
+    .widget-wrapper {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      container-type: inline-size;
+    }
+
+    /* PODCAST CARD - NO SHADOW, BORDER ONLY */
+    .podcast-card {
+      position: relative;
+      width: 100%;
+      max-width: 360px;
+      background: var(--bg-card);
+      border-radius: var(--card-radius);
+      border: 1px solid var(--border-color);
+      box-shadow: none !important;
+      padding: 16px;
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+      transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+    }
+
+    /* Settings Gear Button (Hover) */
+    .settings-btn {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      width: 26px;
+      height: 26px;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .podcast-card:hover .settings-btn { opacity: 1; }
+    .settings-btn:hover { transform: scale(1.1); background: rgba(0, 0, 0, 0.78); }
+
+    .spotify-logo {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 22px;
+      height: 22px;
+      color: var(--text-main);
+      opacity: 0.92;
+      text-decoration: none;
+      transition: transform 0.2s ease;
+    }
+    .spotify-logo:hover { transform: scale(1.1); }
+    .spotify-logo svg { width: 100%; height: 100%; fill: currentColor; }
+
+    /* Centered Square Podcast Cover Art (Matches Screenshot Left Card) */
+    .cover-wrapper {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 6px;
+      margin-bottom: 2px;
+    }
+
+    .podcast-cover {
+      width: clamp(105px, 36cqw, 134px);
+      height: clamp(105px, 36cqw, 134px);
+      border-radius: 10px;
+      overflow: hidden;
+      background: #222;
+      border: 1px solid rgba(128, 128, 128, 0.2);
+    }
+    .podcast-cover img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Episode Info */
+    .episode-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .episode-title {
+      font-size: clamp(14px, 4.5cqw, 16px);
+      font-weight: 700;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+      letter-spacing: -0.01em;
+    }
+
+    .show-subtitle {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-sub);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .save-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-sub);
+      text-decoration: none;
+      cursor: pointer;
+      width: fit-content;
+      transition: color 0.15s ease;
+    }
+    .save-row:hover { color: var(--text-main); }
+
+    /* Bottom Podcast Scrubbing & Control Bar */
+    .podcast-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .skip-btn {
+      background: none;
+      border: none;
+      color: var(--text-sub);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px;
+      transition: color 0.15s ease, transform 0.1s ease;
+    }
+    .skip-btn:hover { color: var(--text-main); }
+    .skip-btn:active { transform: scale(0.9); }
+
+    .scrubber-track {
+      flex: 1;
+      height: 4px;
+      background: var(--bar-bg);
+      border-radius: 2px;
+      position: relative;
+      cursor: pointer;
+      overflow: hidden;
+    }
+    .scrubber-fill {
+      width: 28%;
+      height: 100%;
+      background: var(--bar-fill);
+      border-radius: 2px;
+      transition: width 0.25s linear;
+    }
+
+    .duration-text {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-sub);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .more-btn {
+      background: none;
+      border: none;
+      color: var(--text-sub);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      padding: 2px;
+    }
+    .more-btn:hover { color: var(--text-main); }
+
+    .play-fab {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: var(--text-main);
+      color: var(--bg-card);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: transform 0.15s ease;
+    }
+    .play-fab:hover { transform: scale(1.06); }
+    .play-fab:active { transform: scale(0.96); }
+
+    /* SETTINGS MODAL */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(18, 18, 18, 0.98);
+      backdrop-filter: blur(8px);
+      border-radius: var(--card-radius);
+      z-index: 100;
+      padding: 12px;
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      color: #ffffff;
+    }
+    .modal-overlay.active { display: flex; }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      padding-bottom: 6px;
+    }
+    .modal-title { font-size: 12px; font-weight: 700; }
+    .close-btn { background: none; border: none; color: #a7a7a7; font-size: 16px; cursor: pointer; }
+
+    .modal-body {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin: 6px 0;
+      overflow-y: auto;
+    }
+    .input-group { display: flex; flex-direction: column; gap: 2px; }
+    .input-group label { font-size: 10px; font-weight: 600; color: #b0b0b0; }
+    .input-group input[type="text"] {
+      background: #2a2a2a;
+      border: 1px solid #3e3e3e;
+      border-radius: 5px;
+      color: #ffffff;
+      padding: 4px 7px;
+      font-size: 11px;
+      outline: none;
+    }
+    .color-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      padding-top: 4px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .color-box { display: flex; flex-direction: column; gap: 2px; }
+    .color-box label { font-size: 10px; font-weight: 600; color: #b0b0b0; }
+    .color-pair { display: flex; align-items: center; gap: 4px; }
+    .color-pair input[type="color"] { width: 20px; height: 20px; border: none; background: none; cursor: pointer; }
+    .color-pair input[type="text"] {
+      width: 100%;
+      background: #2a2a2a;
+      border: 1px solid #3e3e3e;
+      border-radius: 4px;
+      color: #fff;
+      padding: 3px 5px;
+      font-size: 10.5px;
+      font-family: monospace;
+    }
+
+    .modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      padding-top: 6px;
+      gap: 4px;
+    }
+    .btn-group { display: flex; gap: 5px; }
+    .btn-action {
+      border: none;
+      border-radius: 5px;
+      padding: 5px 8px;
+      font-size: 10.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-save { background: #ffffff; color: #000000; }
+    .btn-copy { background: #333333; color: #ffffff; border: 1px solid #555; }
+    .btn-reset { background: none; color: #e05656; border: none; font-size: 10px; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient Healing Audio Stream -->
+  <audio id="audioPlayer" loop src="https://stream.zeno.fm/f3wvbbqmdg8uv"></audio>
+
+  <div class="widget-wrapper">
+    <div class="podcast-card">
+      <button class="settings-btn" id="openSettingsBtn" title="Customize Podcast & Colors">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      </button>
+
+      <a class="spotify-logo" id="podcastLink" href="https://open.spotify.com/show/5EqqB52m2bsr4k1Ii7sStc" target="_blank" title="Listen on Spotify">
+        <svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.503 17.315c-.218.358-.68.472-1.038.254-2.846-1.74-6.428-2.134-10.65-1.168-.41.094-.816-.164-.91-.574-.094-.41.164-.816.574-.91 4.62-1.055 8.57-.614 11.77 1.36.358.218.472.68.254 1.038zm1.47-3.265c-.275.448-.86.59-1.308.315-3.26-2.003-8.23-2.584-12.083-1.414-.505.153-1.04-.135-1.193-.64-.153-.505.135-1.04.64-1.193 4.397-1.334 9.877-.69 13.63 1.624.448.275.59.86.315 1.308zm.126-3.41c-3.91-2.322-10.354-2.535-14.086-1.402-.6.182-1.237-.16-1.42-.76-.182-.6.16-1.237.76-1.42 4.29-1.302 11.41-1.055 15.918 1.62.54.32.716 1.02.395 1.56-.32.54-1.02.716-1.56.395z"/></svg>
+      </a>
+
+      <!-- Centered Podcast Cover -->
+      <div class="cover-wrapper">
+        <div class="podcast-cover">
+          <img id="coverImg" src="https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=500&auto=format&fit=crop&q=80" alt="Healing Podcast">
+        </div>
+      </div>
+
+      <!-- Episode Title & Show Subtitle -->
+      <div class="episode-info">
+        <div class="episode-title" id="episodeTitle" title="Click to open Podcast">Slowing Down, Letting Go & Inner Peace</div>
+        <div class="show-subtitle" id="showSubtitle">Nov 13 · Mindful Healing & Self-Care</div>
+        <a class="save-row" id="savePodcastLink" href="https://open.spotify.com/show/5EqqB52m2bsr4k1Ii7sStc" target="_blank">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+          <span>Save on Spotify</span>
+        </a>
+      </div>
+
+      <!-- Bottom Control Bar (-15s, Scrubber, +15s, Time, ..., Play) -->
+      <div class="podcast-controls">
+        <button class="skip-btn" id="back15Btn" title="Rewind 15s">↺15</button>
+        <div class="scrubber-track" id="scrubberTrack">
+          <div class="scrubber-fill" id="scrubberFill"></div>
+        </div>
+        <button class="skip-btn" id="fwd15Btn" title="Forward 15s">15↻</button>
+        <span class="duration-text" id="timeDisplay">24:15</span>
+        <button class="more-btn" id="moreBtn" title="Customize Podcast">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle></svg>
+        </button>
+        <button class="play-fab" id="playBtn" title="Play / Pause">
+          <svg id="playIcon" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
+        </button>
+      </div>
+
+      <!-- SETTINGS MODAL -->
+      <div class="modal-overlay" id="settingsModal">
+        <div class="modal-header">
+          <div class="modal-title">⚙️ Podcast & Color Settings</div>
+          <button class="close-btn" id="closeSettingsBtn">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="input-group">
+            <label>Spotify Podcast / Episode URL:</label>
+            <input type="text" id="inputPodcastUrl" placeholder="https://open.spotify.com/show/...">
+          </div>
+          <div class="input-group">
+            <label>Episode Title:</label>
+            <input type="text" id="inputEpisodeTitle" placeholder="Slowing Down, Letting Go & Inner Peace">
+          </div>
+          <div class="input-group">
+            <label>Date & Show Name:</label>
+            <input type="text" id="inputShowSubtitle" placeholder="Nov 13 · Mindful Healing & Self-Care">
+          </div>
+          <div class="input-group">
+            <label>Cover Image URL:</label>
+            <input type="text" id="inputCoverUrl" placeholder="https://...">
+          </div>
+
+          <div class="color-grid">
+            <div class="color-box">
+              <label>Card Background:</label>
+              <div class="color-pair">
+                <input type="color" id="pickerBg" value="#333333">
+                <input type="text" id="hexBg" value="#333333" maxlength="7">
+              </div>
+            </div>
+            <div class="color-box">
+              <label>Text & Accents:</label>
+              <div class="color-pair">
+                <input type="color" id="pickerText" value="#ffffff">
+                <input type="text" id="hexText" value="#ffffff" maxlength="7">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-reset" id="resetBtn">Auto Responsive</button>
+          <div class="btn-group">
+            <button class="btn-action btn-copy" id="copyUrlBtn">📋 Copy Template URL</button>
+            <button class="btn-action btn-save" id="saveBtn">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'notion_podcast_widget_v1';
+    const urlParams = new URLSearchParams(window.location.search);
+
+    const DEFAULTS = {
+      podcastUrl: 'https://open.spotify.com/show/5EqqB52m2bsr4k1Ii7sStc',
+      title: 'Slowing Down, Letting Go & Inner Peace',
+      subtitle: 'Nov 13 · Mindful Healing & Self-Care',
+      cover: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=500&auto=format&fit=crop&q=80',
+      bg: null,
+      text: null
+    };
+
+    function normalizeHex(val) {
+      if (!val) return null;
+      val = val.trim().replace(/^#/, '');
+      if (/^[0-9A-Fa-f]{6}$/.test(val)) return '#' + val;
+      return null;
+    }
+
+    function getActiveConfig() {
+      let saved = null;
+      try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) {}
+
+      const fromUrl = {
+        podcastUrl: urlParams.get('podcast') || DEFAULTS.podcastUrl,
+        title: urlParams.get('title') || DEFAULTS.title,
+        subtitle: urlParams.get('subtitle') || DEFAULTS.subtitle,
+        cover: urlParams.get('cover') || DEFAULTS.cover,
+        bg: normalizeHex(urlParams.get('bg')),
+        text: normalizeHex(urlParams.get('text'))
+      };
+
+      return saved ? { ...fromUrl, ...saved } : fromUrl;
+    }
+
+    function applyConfig(cfg) {
+      document.getElementById('episodeTitle').textContent = cfg.title || DEFAULTS.title;
+      document.getElementById('showSubtitle').textContent = cfg.subtitle || DEFAULTS.subtitle;
+      document.getElementById('podcastLink').href = cfg.podcastUrl || DEFAULTS.podcastUrl;
+      document.getElementById('savePodcastLink').href = cfg.podcastUrl || DEFAULTS.podcastUrl;
+      document.getElementById('coverImg').src = cfg.cover || DEFAULTS.cover;
+
+      document.getElementById('episodeTitle').onclick = () => {
+        if (cfg.podcastUrl) window.open(cfg.podcastUrl, '_blank');
+      };
+
+      const root = document.documentElement;
+      if (cfg.bg && cfg.text) {
+        root.style.setProperty('--bg-card', cfg.bg);
+        root.style.setProperty('--text-main', cfg.text);
+        root.style.setProperty('--text-sub', cfg.text + 'b3');
+        root.style.setProperty('--border-color', cfg.text + '28');
+        root.style.setProperty('--bar-bg', cfg.text + '38');
+        root.style.setProperty('--bar-fill', cfg.text);
+      } else {
+        root.style.removeProperty('--bg-card');
+        root.style.removeProperty('--text-main');
+        root.style.removeProperty('--text-sub');
+        root.style.removeProperty('--border-color');
+        root.style.removeProperty('--bar-bg');
+        root.style.removeProperty('--bar-fill');
+      }
+    }
+
+    let config = getActiveConfig();
+    applyConfig(config);
+
+    function bindColorPair(pickerId, hexId) {
+      const p = document.getElementById(pickerId);
+      const h = document.getElementById(hexId);
+      p.addEventListener('input', () => h.value = p.value);
+      h.addEventListener('input', () => {
+        if (/^#[0-9A-Fa-f]{6}$/.test(h.value)) p.value = h.value;
+      });
+    }
+    bindColorPair('pickerBg', 'hexBg');
+    bindColorPair('pickerText', 'hexText');
+
+    // Audio & Scrubber Logic
+    const audio = document.getElementById('audioPlayer');
+    const playBtn = document.getElementById('playBtn');
+    const playIcon = document.getElementById('playIcon');
+    const scrubberFill = document.getElementById('scrubberFill');
+    const timeDisplay = document.getElementById('timeDisplay');
+
+    let isPlaying = false;
+    let totalSecs = 24 * 60 + 15; // 24:15 total
+    let elapsedSecs = 400;
+
+    function updateScrubber() {
+      const remaining = Math.max(0, totalSecs - elapsedSecs);
+      const mins = Math.floor(remaining / 60);
+      const secs = String(remaining % 60).padStart(2, '0');
+      timeDisplay.textContent = `${String(mins).padStart(2, '0')}:${secs}`;
+      const pct = Math.min(100, Math.max(0, (elapsedSecs / totalSecs) * 100));
+      scrubberFill.style.width = pct + '%';
+    }
+
+    playBtn.addEventListener('click', () => {
+      if (isPlaying) {
+        audio.pause();
+        playIcon.innerHTML = '<polygon points="6 4 20 12 6 20 6 4"></polygon>';
+        isPlaying = false;
+      } else {
+        audio.play().catch(() => {});
+        playIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>';
+        isPlaying = true;
+      }
+    });
+
+    document.getElementById('back15Btn').addEventListener('click', () => {
+      elapsedSecs = Math.max(0, elapsedSecs - 15);
+      updateScrubber();
+    });
+
+    document.getElementById('fwd15Btn').addEventListener('click', () => {
+      elapsedSecs = Math.min(totalSecs, elapsedSecs + 15);
+      updateScrubber();
+    });
+
+    document.getElementById('scrubberTrack').addEventListener('click', (e) => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const clickRatio = (e.clientX - rect.left) / rect.width;
+      elapsedSecs = Math.floor(clickRatio * totalSecs);
+      updateScrubber();
+    });
+
+    setInterval(() => {
+      if (isPlaying && elapsedSecs < totalSecs) {
+        elapsedSecs++;
+        updateScrubber();
+      }
+    }, 1000);
+
+    // Modal Events
+    const modal = document.getElementById('settingsModal');
+    function openSettings() {
+      document.getElementById('inputPodcastUrl').value = config.podcastUrl || '';
+      document.getElementById('inputEpisodeTitle').value = config.title || '';
+      document.getElementById('inputShowSubtitle').value = config.subtitle || '';
+      document.getElementById('inputCoverUrl').value = config.cover || '';
+      const bg = config.bg || '#333333';
+      const text = config.text || '#ffffff';
+      document.getElementById('pickerBg').value = bg;
+      document.getElementById('hexBg').value = bg;
+      document.getElementById('pickerText').value = text;
+      document.getElementById('hexText').value = text;
+      modal.classList.add('active');
+    }
+
+    document.getElementById('openSettingsBtn').addEventListener('click', openSettings);
+    document.getElementById('moreBtn').addEventListener('click', openSettings);
+    document.getElementById('closeSettingsBtn').addEventListener('click', () => modal.classList.remove('active'));
+
+    document.getElementById('saveBtn').addEventListener('click', () => {
+      config = {
+        podcastUrl: document.getElementById('inputPodcastUrl').value.trim() || DEFAULTS.podcastUrl,
+        title: document.getElementById('inputEpisodeTitle').value.trim() || DEFAULTS.title,
+        subtitle: document.getElementById('inputShowSubtitle').value.trim() || DEFAULTS.subtitle,
+        cover: document.getElementById('inputCoverUrl').value.trim() || DEFAULTS.cover,
+        bg: normalizeHex(document.getElementById('hexBg').value) || '#333333',
+        text: normalizeHex(document.getElementById('hexText').value) || '#ffffff'
+      };
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(config)); } catch (e) {}
+      applyConfig(config);
+      modal.classList.remove('active');
+    });
+
+    function copyTextFallback(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).catch(() => {});
+      }
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+
+    document.getElementById('copyUrlBtn').addEventListener('click', () => {
+      const params = new URLSearchParams();
+      const bg = (normalizeHex(document.getElementById('hexBg').value) || '#333333').replace('#', '');
+      const text = (normalizeHex(document.getElementById('hexText').value) || '#ffffff').replace('#', '');
+      params.set('bg', bg);
+      params.set('text', text);
+
+      const po = document.getElementById('inputPodcastUrl').value.trim();
+      const ti = document.getElementById('inputEpisodeTitle').value.trim();
+      const su = document.getElementById('inputShowSubtitle').value.trim();
+      const co = document.getElementById('inputCoverUrl').value.trim();
+      if (po && po !== DEFAULTS.podcastUrl) params.set('podcast', po);
+      if (ti && ti !== DEFAULTS.title) params.set('title', ti);
+      if (su && su !== DEFAULTS.subtitle) params.set('subtitle', su);
+      if (co && co !== DEFAULTS.cover) params.set('cover', co);
+
+      const fullUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+      copyTextFallback(fullUrl);
+      const btn = document.getElementById('copyUrlBtn');
+      btn.textContent = '✓ Copied URL!';
+      setTimeout(() => btn.textContent = '📋 Copy Template URL', 1800);
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+      config = getActiveConfig();
+      config.bg = null;
+      config.text = null;
+      applyConfig(config);
+      modal.classList.remove('active');
+    });
+
+    updateScrubber();
+  </script>
+</body>
+</html>
