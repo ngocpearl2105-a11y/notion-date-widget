@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notion Aesthetic Calendar</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* DEFAULT RESPONSIVE THEME (No shadow, clean border) */
+    :root {
+      /* Light Mode Default: Dark Card, White Text */
+      --bg-card: #121212;
+      --text-main: #ffffff;
+      --text-muted: rgba(255, 255, 255, 0.28);
+      --text-weekday: rgba(255, 255, 255, 0.75);
+      --pill-bg: rgba(255, 255, 255, 0.1);
+      --today-bg: rgba(255, 255, 255, 0.18);
+      --today-text: #ffffff;
+      --border-color: rgba(0, 0, 0, 0.16);
+      --card-radius: 18px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        /* Dark Mode Default: White Card, Black Text */
+        --bg-card: #ffffff;
+        --text-main: #1d1d1f;
+        --text-muted: rgba(29, 29, 31, 0.25);
+        --text-weekday: rgba(29, 29, 31, 0.7);
+        --pill-bg: #f0ede9;
+        --today-bg: #ebe7e2;
+        --today-text: #111111;
+        --border-color: rgba(255, 255, 255, 0.22);
+      }
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: transparent !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      padding: 4px;
+      overflow: hidden;
+    }
+
+    .calendar-wrapper {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      container-type: inline-size;
+    }
+
+    /* CALENDAR CARD - NO SHADOW, BORDER ONLY */
+    .calendar-card {
+      position: relative;
+      width: 100%;
+      max-width: 310px;
+      background: var(--bg-card);
+      border-radius: var(--card-radius);
+      border: 1px solid var(--border-color);
+      box-shadow: none !important;
+      padding: clamp(12px, 5cqw, 18px);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(10px, 4cqw, 14px);
+      transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+    }
+
+    /* Settings Gear Button (Hover) */
+    .settings-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 24px;
+      height: 24px;
+      background: var(--pill-bg);
+      border-radius: 50%;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .calendar-card:hover .settings-btn { opacity: 1; }
+    .settings-btn:hover { transform: scale(1.1); }
+
+    /* Header Pill (< August 2026 >) */
+    .month-header {
+      width: 100%;
+      height: clamp(36px, 12cqw, 44px);
+      background: var(--pill-bg);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      transition: background-color 0.25s ease;
+    }
+
+    .nav-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      color: var(--text-main);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease, transform 0.1s ease;
+    }
+    .nav-btn:hover { background: rgba(128, 128, 128, 0.15); }
+    .nav-btn:active { transform: scale(0.9); }
+
+    .month-label {
+      font-size: clamp(13px, 4.5cqw, 15px);
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: -0.01em;
+      cursor: pointer;
+    }
+
+    /* Weekdays Grid (M T W T F S S) */
+    .weekdays-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      text-align: center;
+      margin-bottom: -2px;
+    }
+
+    .weekday {
+      font-size: clamp(10px, 3.4cqw, 11.5px);
+      font-weight: 700;
+      color: var(--text-weekday);
+      padding: 4px 0;
+    }
+
+    /* Days Grid (6 rows x 7 cols) */
+    .days-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      row-gap: clamp(3px, 1.2cqw, 5px);
+      column-gap: 2px;
+      text-align: center;
+    }
+
+    .day-cell {
+      aspect-ratio: 1 / 1;
+      max-height: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(11px, 3.8cqw, 13px);
+      font-weight: 500;
+      color: var(--text-main);
+      border-radius: 8px;
+      margin: 0 auto;
+      width: 100%;
+      max-width: 34px;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+
+    .day-cell.other-month {
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .day-cell.today {
+      background: var(--today-bg);
+      color: var(--today-text);
+      font-weight: 700;
+    }
+
+    /* SETTINGS MODAL */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(18, 18, 18, 0.98);
+      backdrop-filter: blur(8px);
+      border-radius: var(--card-radius);
+      z-index: 100;
+      padding: 14px;
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      color: #ffffff;
+    }
+    .modal-overlay.active { display: flex; }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      padding-bottom: 6px;
+    }
+    .modal-title { font-size: 12px; font-weight: 700; }
+    .close-btn { background: none; border: none; color: #a7a7a7; font-size: 16px; cursor: pointer; }
+
+    .modal-body {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin: 6px 0;
+    }
+    .color-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .color-row label { font-size: 11px; font-weight: 600; color: #cccccc; }
+    .color-inputs { display: flex; align-items: center; gap: 6px; }
+    .color-inputs input[type="color"] {
+      width: 22px; height: 22px; border: none; background: none; cursor: pointer;
+    }
+    .color-inputs input[type="text"] {
+      width: 72px;
+      background: #2a2a2a;
+      border: 1px solid #444;
+      border-radius: 5px;
+      color: #fff;
+      padding: 4px 6px;
+      font-size: 11px;
+      font-family: monospace;
+    }
+
+    .modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      padding-top: 6px;
+      gap: 4px;
+    }
+    .btn-group { display: flex; gap: 5px; }
+    .btn-action {
+      border: none;
+      border-radius: 5px;
+      padding: 5px 8px;
+      font-size: 10.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-save { background: #ffffff; color: #000000; }
+    .btn-copy { background: #333333; color: #ffffff; border: 1px solid #555; }
+    .btn-reset { background: none; color: #e05656; border: none; font-size: 10px; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <div class="calendar-wrapper">
+    <div class="calendar-card">
+      <button class="settings-btn" id="openSettingsBtn" title="Customize Calendar Colors">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      </button>
+
+      <!-- Header Bar (< Month Year >) -->
+      <div class="month-header">
+        <button class="nav-btn" id="prevMonthBtn" title="Previous Month">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <div class="month-label" id="monthLabel" title="Click to jump to Today">November 2026</div>
+        <button class="nav-btn" id="nextMonthBtn" title="Next Month">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+        </button>
+      </div>
+
+      <!-- Weekdays Header (Monday Start) -->
+      <div class="weekdays-grid">
+        <div class="weekday">M</div>
+        <div class="weekday">T</div>
+        <div class="weekday">W</div>
+        <div class="weekday">T</div>
+        <div class="weekday">F</div>
+        <div class="weekday">S</div>
+        <div class="weekday">S</div>
+      </div>
+
+      <!-- Days Numbers Grid -->
+      <div class="days-grid" id="daysGrid"></div>
+
+      <!-- SETTINGS MODAL -->
+      <div class="modal-overlay" id="settingsModal">
+        <div class="modal-header">
+          <div class="modal-title">⚙️ Calendar Colors</div>
+          <button class="close-btn" id="closeSettingsBtn">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="color-row">
+            <label>Card Background:</label>
+            <div class="color-inputs">
+              <input type="color" id="pickerBg" value="#ffffff">
+              <input type="text" id="hexBg" value="#ffffff" maxlength="7">
+            </div>
+          </div>
+          <div class="color-row">
+            <label>Text & Numbers:</label>
+            <div class="color-inputs">
+              <input type="color" id="pickerText" value="#1d1d1f">
+              <input type="text" id="hexText" value="#1d1d1f" maxlength="7">
+            </div>
+          </div>
+          <div class="color-row">
+            <label>Header & Today Pill:</label>
+            <div class="color-inputs">
+              <input type="color" id="pickerAccent" value="#f0ede9">
+              <input type="text" id="hexAccent" value="#f0ede9" maxlength="7">
+            </div>
+          </div>
+          <div class="color-row">
+            <label>Border Color:</label>
+            <div class="color-inputs">
+              <input type="color" id="pickerBorder" value="#e5e5e5">
+              <input type="text" id="hexBorder" value="#e5e5e5" maxlength="7">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-reset" id="resetBtn">Auto Responsive</button>
+          <div class="btn-group">
+            <button class="btn-action btn-copy" id="copyUrlBtn">📋 Copy Template URL</button>
+            <button class="btn-action btn-save" id="saveBtn">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'notion_calendar_widget_v1';
+    const urlParams = new URLSearchParams(window.location.search);
+
+    function normalizeHex(val) {
+      if (!val) return null;
+      val = val.trim().replace(/^#/, '');
+      if (/^[0-9A-Fa-f]{6}$/.test(val)) return '#' + val;
+      return null;
+    }
+
+    function loadTheme() {
+      let saved = null;
+      try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) {}
+
+      const urlBg = normalizeHex(urlParams.get('bg'));
+      const urlText = normalizeHex(urlParams.get('text'));
+      const urlAccent = normalizeHex(urlParams.get('accent'));
+      const urlBorder = normalizeHex(urlParams.get('border'));
+
+      const active = saved || ((urlBg || urlText) ? {
+        bg: urlBg || '#ffffff',
+        text: urlText || '#1d1d1f',
+        accent: urlAccent || '#f0ede9',
+        border: urlBorder || '#e5e5e5'
+      } : null);
+
+      const root = document.documentElement;
+      if (active && active.bg && active.text) {
+        root.style.setProperty('--bg-card', active.bg);
+        root.style.setProperty('--text-main', active.text);
+        root.style.setProperty('--text-muted', active.text + '44');
+        root.style.setProperty('--text-weekday', active.text + 'bb');
+        root.style.setProperty('--pill-bg', active.accent || (active.text + '18'));
+        root.style.setProperty('--today-bg', active.accent || (active.text + '24'));
+        root.style.setProperty('--today-text', active.text);
+        root.style.setProperty('--border-color', active.border || (active.text + '22'));
+        return active;
+      } else {
+        root.style.removeProperty('--bg-card');
+        root.style.removeProperty('--text-main');
+        root.style.removeProperty('--text-muted');
+        root.style.removeProperty('--text-weekday');
+        root.style.removeProperty('--pill-bg');
+        root.style.removeProperty('--today-bg');
+        root.style.removeProperty('--today-text');
+        root.style.removeProperty('--border-color');
+        return null;
+      }
+    }
+
+    let currentTheme = loadTheme();
+
+    function bindColorPair(pickerId, hexId) {
+      const p = document.getElementById(pickerId);
+      const h = document.getElementById(hexId);
+      p.addEventListener('input', () => h.value = p.value);
+      h.addEventListener('input', () => {
+        if (/^#[0-9A-Fa-f]{6}$/.test(h.value)) p.value = h.value;
+      });
+    }
+    bindColorPair('pickerBg', 'hexBg');
+    bindColorPair('pickerText', 'hexText');
+    bindColorPair('pickerAccent', 'hexAccent');
+    bindColorPair('pickerBorder', 'hexBorder');
+
+    // Calendar Logic (Monday First)
+    const today = new Date();
+    let viewYear = today.getFullYear();
+    let viewMonth = today.getMonth();
+
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+
+    function renderCalendar() {
+      const monthLabel = document.getElementById('monthLabel');
+      const daysGrid = document.getElementById('daysGrid');
+      monthLabel.textContent = `${monthNames[viewMonth]} ${viewYear}`;
+      daysGrid.innerHTML = '';
+
+      // First day of month (0=Sun, 1=Mon, ..., 6=Sat) -> Convert to Monday-based (0=Mon ... 6=Sun)
+      const firstDayRaw = new Date(viewYear, viewMonth, 1).getDay();
+      const startOffset = (firstDayRaw + 6) % 7;
+
+      const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+      const daysInPrevMonth = new Date(viewYear, viewMonth, 0).getDate();
+
+      const totalCells = 42; // 6 rows x 7 columns for consistent height
+
+      for (let i = 0; i < totalCells; i++) {
+        const cell = document.createElement('div');
+        cell.className = 'day-cell';
+
+        if (i < startOffset) {
+          // Previous month trailing days
+          cell.textContent = daysInPrevMonth - startOffset + 1 + i;
+          cell.classList.add('other-month');
+        } else if (i < startOffset + daysInMonth) {
+          // Current month days
+          const dateNum = i - startOffset + 1;
+          cell.textContent = dateNum;
+
+          if (
+            dateNum === today.getDate() &&
+            viewMonth === today.getMonth() &&
+            viewYear === today.getFullYear()
+          ) {
+            cell.classList.add('today');
+          }
+        } else {
+          // Next month leading days
+          cell.textContent = i - (startOffset + daysInMonth) + 1;
+          cell.classList.add('other-month');
+        }
+
+        daysGrid.appendChild(cell);
+      }
+    }
+
+    document.getElementById('prevMonthBtn').addEventListener('click', () => {
+      viewMonth--;
+      if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+      renderCalendar();
+    });
+
+    document.getElementById('nextMonthBtn').addEventListener('click', () => {
+      viewMonth++;
+      if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+      renderCalendar();
+    });
+
+    document.getElementById('monthLabel').addEventListener('click', () => {
+      viewYear = today.getFullYear();
+      viewMonth = today.getMonth();
+      renderCalendar();
+    });
+
+    // Settings Modal Logic
+    const modal = document.getElementById('settingsModal');
+    document.getElementById('openSettingsBtn').addEventListener('click', () => {
+      const bg = (currentTheme && currentTheme.bg) || '#ffffff';
+      const text = (currentTheme && currentTheme.text) || '#1d1d1f';
+      const accent = (currentTheme && currentTheme.accent) || '#f0ede9';
+      const border = (currentTheme && currentTheme.border) || '#e5e5e5';
+
+      document.getElementById('pickerBg').value = bg;
+      document.getElementById('hexBg').value = bg;
+      document.getElementById('pickerText').value = text;
+      document.getElementById('hexText').value = text;
+      document.getElementById('pickerAccent').value = accent;
+      document.getElementById('hexAccent').value = accent;
+      document.getElementById('pickerBorder').value = border;
+      document.getElementById('hexBorder').value = border;
+      modal.classList.add('active');
+    });
+
+    document.getElementById('closeSettingsBtn').addEventListener('click', () => modal.classList.remove('active'));
+
+    document.getElementById('saveBtn').addEventListener('click', () => {
+      const cfg = {
+        bg: normalizeHex(document.getElementById('hexBg').value) || '#ffffff',
+        text: normalizeHex(document.getElementById('hexText').value) || '#1d1d1f',
+        accent: normalizeHex(document.getElementById('hexAccent').value) || '#f0ede9',
+        border: normalizeHex(document.getElementById('hexBorder').value) || '#e5e5e5'
+      };
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg)); } catch (e) {}
+      currentTheme = loadTheme();
+      modal.classList.remove('active');
+    });
+
+    function copyTextFallback(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).catch(() => {});
+      }
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+
+    document.getElementById('copyUrlBtn').addEventListener('click', () => {
+      const bg = (normalizeHex(document.getElementById('hexBg').value) || '#ffffff').replace('#', '');
+      const text = (normalizeHex(document.getElementById('hexText').value) || '#1d1d1f').replace('#', '');
+      const accent = (normalizeHex(document.getElementById('hexAccent').value) || '#f0ede9').replace('#', '');
+      const border = (normalizeHex(document.getElementById('hexBorder').value) || '#e5e5e5').replace('#', '');
+      const baseUrl = window.location.origin + window.location.pathname;
+      const fullUrl = `${baseUrl}?bg=${bg}&text=${text}&accent=${accent}&border=${border}`;
+      copyTextFallback(fullUrl);
+      const btn = document.getElementById('copyUrlBtn');
+      btn.textContent = '✓ Copied URL!';
+      setTimeout(() => btn.textContent = '📋 Copy Template URL', 1800);
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+      currentTheme = loadTheme();
+      modal.classList.remove('active');
+    });
+
+    renderCalendar();
+  </script>
+</body>
+</html>
