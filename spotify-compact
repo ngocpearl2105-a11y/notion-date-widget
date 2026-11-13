@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notion Compact Spotify Player</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    /* DEFAULT RESPONSIVE THEME (No shadow, border only) */
+    :root {
+      /* Light Mode Default: Dark Card, White Text */
+      --bg-card: #282828;
+      --bg-bottom: #202020;
+      --text-main: #ffffff;
+      --text-sub: rgba(255, 255, 255, 0.65);
+      --border-color: rgba(0, 0, 0, 0.16);
+      --divider: rgba(255, 255, 255, 0.08);
+      --track-hover: rgba(255, 255, 255, 0.08);
+      --badge-bg: rgba(0, 0, 0, 0.45);
+      --card-radius: 14px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        /* Dark Mode Default: White Card, Black Text */
+        --bg-card: #ffffff;
+        --bg-bottom: #f6f6f6;
+        --text-main: #121212;
+        --text-sub: rgba(18, 18, 18, 0.6);
+        --border-color: rgba(255, 255, 255, 0.22);
+        --divider: rgba(0, 0, 0, 0.07);
+        --track-hover: rgba(0, 0, 0, 0.05);
+        --badge-bg: rgba(0, 0, 0, 0.08);
+      }
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: transparent !important;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      padding: 4px;
+      overflow: hidden;
+    }
+
+    .widget-wrapper {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      container-type: inline-size;
+    }
+
+    /* COMPACT SPOTIFY CARD - NO SHADOW, BORDER ONLY */
+    .compact-card {
+      position: relative;
+      width: 100%;
+      max-width: 340px;
+      background: var(--bg-card);
+      border-radius: var(--card-radius);
+      border: 1px solid var(--border-color);
+      box-shadow: none !important;
+      color: var(--text-main);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+    }
+
+    /* Settings Gear Button (Hover) */
+    .settings-btn {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      width: 26px;
+      height: 26px;
+      background: rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(4px);
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .compact-card:hover .settings-btn { opacity: 1; }
+    .settings-btn:hover { transform: scale(1.1); background: rgba(0, 0, 0, 0.8); }
+
+    /* Top Header Section */
+    .top-section {
+      position: relative;
+      padding: 14px 14px 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .spotify-logo {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 20px;
+      height: 20px;
+      color: var(--text-main);
+      opacity: 0.9;
+      text-decoration: none;
+      transition: transform 0.2s ease;
+    }
+    .spotify-logo:hover { transform: scale(1.1); }
+    .spotify-logo svg { width: 100%; height: 100%; fill: currentColor; }
+
+    .header-main {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .cover-art {
+      width: clamp(68px, 24cqw, 84px);
+      height: clamp(68px, 24cqw, 84px);
+      border-radius: 8px;
+      overflow: hidden;
+      flex-shrink: 0;
+      background: #1a1a1a;
+      border: 1px solid var(--divider);
+    }
+    .cover-art img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .header-info {
+      flex: 1;
+      min-width: 0;
+      padding-right: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .playlist-title {
+      font-size: clamp(14px, 4.5cqw, 16px);
+      font-weight: 700;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      cursor: pointer;
+    }
+
+    .playlist-author {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-sub);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .save-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-sub);
+      text-decoration: none;
+      cursor: pointer;
+      transition: color 0.15s ease;
+    }
+    .save-row:hover { color: var(--text-main); }
+
+    /* Controls Bar inside Top Section */
+    .controls-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 2px;
+    }
+
+    .preview-badge {
+      font-size: 9.5px;
+      font-weight: 700;
+      padding: 3px 6px;
+      border-radius: 4px;
+      background: var(--badge-bg);
+      color: var(--text-sub);
+      letter-spacing: 0.03em;
+    }
+
+    .controls-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      color: var(--text-sub);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px;
+      transition: color 0.15s ease, transform 0.15s ease;
+    }
+    .icon-btn:hover { color: var(--text-main); }
+    .icon-btn:active { transform: scale(0.92); }
+
+    .play-fab {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: none;
+      background: var(--text-main);
+      color: var(--bg-card);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+    .play-fab:hover { transform: scale(1.06); }
+    .play-fab:active { transform: scale(0.96); }
+
+    /* Bottom Tracklist Section */
+    .tracklist-section {
+      background: var(--bg-bottom);
+      border-top: 1px solid var(--divider);
+      padding: 6px 10px 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      transition: background-color 0.25s ease;
+    }
+
+    .track-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 5px 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .track-row:hover { background: var(--track-hover); }
+    .track-row.active .track-name { font-weight: 700; }
+
+    .track-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .track-index {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-sub);
+      width: 12px;
+      text-align: center;
+    }
+
+    .track-meta {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .track-name {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .track-artist {
+      font-size: 10px;
+      color: var(--text-sub);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .track-duration {
+      font-size: 10.5px;
+      font-weight: 500;
+      color: var(--text-sub);
+      font-variant-numeric: tabular-nums;
+      margin-left: 8px;
+    }
+
+    /* SETTINGS MODAL */
+    .modal-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(18, 18, 18, 0.98);
+      backdrop-filter: blur(8px);
+      border-radius: var(--card-radius);
+      z-index: 100;
+      padding: 12px;
+      display: none;
+      flex-direction: column;
+      justify-content: space-between;
+      color: #ffffff;
+    }
+    .modal-overlay.active { display: flex; }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      padding-bottom: 6px;
+    }
+    .modal-title { font-size: 12px; font-weight: 700; }
+    .close-btn { background: none; border: none; color: #a7a7a7; font-size: 16px; cursor: pointer; }
+
+    .modal-body {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin: 6px 0;
+      overflow-y: auto;
+    }
+    .input-group { display: flex; flex-direction: column; gap: 2px; }
+    .input-group label { font-size: 10px; font-weight: 600; color: #b0b0b0; }
+    .input-group input[type="text"] {
+      background: #2a2a2a;
+      border: 1px solid #3e3e3e;
+      border-radius: 5px;
+      color: #ffffff;
+      padding: 4px 7px;
+      font-size: 11px;
+      outline: none;
+    }
+    .color-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      padding-top: 4px;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .color-box { display: flex; flex-direction: column; gap: 2px; }
+    .color-box label { font-size: 10px; font-weight: 600; color: #b0b0b0; }
+    .color-pair { display: flex; align-items: center; gap: 4px; }
+    .color-pair input[type="color"] { width: 20px; height: 20px; border: none; background: none; cursor: pointer; }
+    .color-pair input[type="text"] {
+      width: 100%;
+      background: #2a2a2a;
+      border: 1px solid #3e3e3e;
+      border-radius: 4px;
+      color: #fff;
+      padding: 3px 5px;
+      font-size: 10.5px;
+      font-family: monospace;
+    }
+
+    .modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      padding-top: 6px;
+      gap: 4px;
+    }
+    .btn-group { display: flex; gap: 5px; }
+    .btn-action {
+      border: none;
+      border-radius: 5px;
+      padding: 5px 8px;
+      font-size: 10.5px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-save { background: #ffffff; color: #000000; }
+    .btn-copy { background: #333333; color: #ffffff; border: 1px solid #555; }
+    .btn-reset { background: none; color: #e05656; border: none; font-size: 10px; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+  <audio id="audioPlayer" loop src="https://stream.zeno.fm/f3wvbbqmdg8uv"></audio>
+
+  <div class="widget-wrapper">
+    <div class="compact-card">
+      <button class="settings-btn" id="openSettingsBtn" title="Customize Player & Colors">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+      </button>
+
+      <!-- Top Header -->
+      <div class="top-section">
+        <a class="spotify-logo" id="spotifyLink" href="https://open.spotify.com" target="_blank" title="Open on Spotify">
+          <svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.503 17.315c-.218.358-.68.472-1.038.254-2.846-1.74-6.428-2.134-10.65-1.168-.41.094-.816-.164-.91-.574-.094-.41.164-.816.574-.91 4.62-1.055 8.57-.614 11.77 1.36.358.218.472.68.254 1.038zm1.47-3.265c-.275.448-.86.59-1.308.315-3.26-2.003-8.23-2.584-12.083-1.414-.505.153-1.04-.135-1.193-.64-.153-.505.135-1.04.64-1.193 4.397-1.334 9.877-.69 13.63 1.624.448.275.59.86.315 1.308zm.126-3.41c-3.91-2.322-10.354-2.535-14.086-1.402-.6.182-1.237-.16-1.42-.76-.182-.6.16-1.237.76-1.42 4.29-1.302 11.41-1.055 15.918 1.62.54.32.716 1.02.395 1.56-.32.54-1.02.716-1.56.395z"/></svg>
+        </a>
+
+        <div class="header-main">
+          <div class="cover-art">
+            <img id="coverImg" src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400&auto=format&fit=crop&q=80" alt="Morning Coffee">
+          </div>
+          <div class="header-info">
+            <div class="playlist-title" id="playlistTitle">Morning Coffee</div>
+            <div class="playlist-author" id="playlistAuthor">Spotify</div>
+            <a class="save-row" id="saveSpotifyLink" href="https://open.spotify.com" target="_blank">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+              <span>Save on Spotify</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="controls-bar">
+          <span class="preview-badge" id="statusBadge">Preview</span>
+          <div class="controls-right">
+            <button class="icon-btn" id="prevBtn" title="Previous">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2"></line></svg>
+            </button>
+            <button class="icon-btn" id="nextBtn" title="Next">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2"></line></svg>
+            </button>
+            <button class="icon-btn" id="moreBtn" title="Open Settings">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="2"></circle><circle cx="12" cy="12" r="2"></circle><circle cx="19" cy="12" r="2"></circle></svg>
+            </button>
+            <button class="play-fab" id="playBtn" title="Play / Pause">
+              <svg id="playIcon" width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"></polygon></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Compact Tracklist -->
+      <div class="tracklist-section" id="trackList">
+        <div class="track-row active" data-index="0">
+          <div class="track-left">
+            <span class="track-index">1</span>
+            <div class="track-meta">
+              <span class="track-name">Staying Still</span>
+              <span class="track-artist">Noah Kahan</span>
+            </div>
+          </div>
+          <span class="track-duration">04:28</span>
+        </div>
+
+        <div class="track-row" data-index="1">
+          <div class="track-left">
+            <span class="track-index">2</span>
+            <div class="track-meta">
+              <span class="track-name">Feeling</span>
+              <span class="track-artist">Billie Marten</span>
+            </div>
+          </div>
+          <span class="track-duration">03:20</span>
+        </div>
+
+        <div class="track-row" data-index="2">
+          <div class="track-left">
+            <span class="track-index">3</span>
+            <div class="track-meta">
+              <span class="track-name">TV</span>
+              <span class="track-artist">Billie Eilish</span>
+            </div>
+          </div>
+          <span class="track-duration">04:41</span>
+        </div>
+      </div>
+
+      <!-- SETTINGS MODAL -->
+      <div class="modal-overlay" id="settingsModal">
+        <div class="modal-header">
+          <div class="modal-title">⚙️ Compact Spotify Settings</div>
+          <button class="close-btn" id="closeSettingsBtn">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="input-group">
+            <label>Spotify Playlist URL:</label>
+            <input type="text" id="inputSpotifyUrl" placeholder="https://open.spotify.com/playlist/...">
+          </div>
+          <div class="input-group">
+            <label>Playlist Title & Subtitle:</label>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+              <input type="text" id="inputTitle" placeholder="Morning Coffee">
+              <input type="text" id="inputAuthor" placeholder="Spotify">
+            </div>
+          </div>
+          <div class="input-group">
+            <label>Cover Image URL:</label>
+            <input type="text" id="inputCoverUrl" placeholder="https://...">
+          </div>
+
+          <div class="color-grid">
+            <div class="color-box">
+              <label>Card Background:</label>
+              <div class="color-pair">
+                <input type="color" id="pickerBg" value="#282828">
+                <input type="text" id="hexBg" value="#282828" maxlength="7">
+              </div>
+            </div>
+            <div class="color-box">
+              <label>Text & Accents:</label>
+              <div class="color-pair">
+                <input type="color" id="pickerText" value="#ffffff">
+                <input type="text" id="hexText" value="#ffffff" maxlength="7">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn-reset" id="resetBtn">Auto Responsive</button>
+          <div class="btn-group">
+            <button class="btn-action btn-copy" id="copyUrlBtn">📋 Copy Template URL</button>
+            <button class="btn-action btn-save" id="saveBtn">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'notion_spotify_compact_v1';
+    const urlParams = new URLSearchParams(window.location.search);
+
+    const DEFAULTS = {
+      spotifyUrl: 'https://open.spotify.com',
+      title: 'Morning Coffee',
+      author: 'Spotify',
+      cover: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400&auto=format&fit=crop&q=80',
+      bg: null,
+      text: null
+    };
+
+    function normalizeHex(val) {
+      if (!val) return null;
+      val = val.trim().replace(/^#/, '');
+      if (/^[0-9A-Fa-f]{6}$/.test(val)) return '#' + val;
+      return null;
+    }
+
+    function getActiveConfig() {
+      let saved = null;
+      try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch (e) {}
+
+      const fromUrl = {
+        spotifyUrl: urlParams.get('spotify') || DEFAULTS.spotifyUrl,
+        title: urlParams.get('title') || DEFAULTS.title,
+        author: urlParams.get('author') || DEFAULTS.author,
+        cover: urlParams.get('cover') || DEFAULTS.cover,
+        bg: normalizeHex(urlParams.get('bg')),
+        text: normalizeHex(urlParams.get('text'))
+      };
+
+      return saved ? { ...fromUrl, ...saved } : fromUrl;
+    }
+
+    function applyConfig(cfg) {
+      document.getElementById('playlistTitle').textContent = cfg.title || DEFAULTS.title;
+      document.getElementById('playlistAuthor').textContent = cfg.author || DEFAULTS.author;
+      document.getElementById('spotifyLink').href = cfg.spotifyUrl || DEFAULTS.spotifyUrl;
+      document.getElementById('saveSpotifyLink').href = cfg.spotifyUrl || DEFAULTS.spotifyUrl;
+      document.getElementById('coverImg').src = cfg.cover || DEFAULTS.cover;
+
+      document.getElementById('playlistTitle').onclick = () => {
+        if (cfg.spotifyUrl) window.open(cfg.spotifyUrl, '_blank');
+      };
+
+      const root = document.documentElement;
+      if (cfg.bg && cfg.text) {
+        root.style.setProperty('--bg-card', cfg.bg);
+        root.style.setProperty('--bg-bottom', cfg.bg);
+        root.style.setProperty('--text-main', cfg.text);
+        root.style.setProperty('--text-sub', cfg.text + 'a6');
+        root.style.setProperty('--border-color', cfg.text + '28');
+        root.style.setProperty('--divider', cfg.text + '18');
+        root.style.setProperty('--badge-bg', cfg.text + '18');
+      } else {
+        root.style.removeProperty('--bg-card');
+        root.style.removeProperty('--bg-bottom');
+        root.style.removeProperty('--text-main');
+        root.style.removeProperty('--text-sub');
+        root.style.removeProperty('--border-color');
+        root.style.removeProperty('--divider');
+        root.style.removeProperty('--badge-bg');
+      }
+    }
+
+    let config = getActiveConfig();
+    applyConfig(config);
+
+    function bindColorPair(pickerId, hexId) {
+      const p = document.getElementById(pickerId);
+      const h = document.getElementById(hexId);
+      p.addEventListener('input', () => h.value = p.value);
+      h.addEventListener('input', () => {
+        if (/^#[0-9A-Fa-f]{6}$/.test(h.value)) p.value = h.value;
+      });
+    }
+    bindColorPair('pickerBg', 'hexBg');
+    bindColorPair('pickerText', 'hexText');
+
+    // Audio & Tracklist Controls
+    const audio = document.getElementById('audioPlayer');
+    const playBtn = document.getElementById('playBtn');
+    const playIcon = document.getElementById('playIcon');
+    const statusBadge = document.getElementById('statusBadge');
+    const trackRows = document.querySelectorAll('.track-row');
+    let isPlaying = false;
+    let currentTrackIdx = 0;
+
+    function selectTrack(idx, autoPlay = true) {
+      currentTrackIdx = (idx + trackRows.length) % trackRows.length;
+      trackRows.forEach((r, i) => r.classList.toggle('active', i === currentTrackIdx));
+      if (autoPlay && !isPlaying) togglePlay();
+    }
+
+    function togglePlay() {
+      if (isPlaying) {
+        audio.pause();
+        playIcon.innerHTML = '<polygon points="6 4 20 12 6 20 6 4"></polygon>';
+        statusBadge.textContent = 'Preview';
+        isPlaying = false;
+      } else {
+        audio.play().catch(() => {});
+        playIcon.innerHTML = '<rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect>';
+        statusBadge.textContent = 'Playing';
+        isPlaying = true;
+      }
+    }
+
+    playBtn.addEventListener('click', togglePlay);
+    document.getElementById('prevBtn').addEventListener('click', () => selectTrack(currentTrackIdx - 1, true));
+    document.getElementById('nextBtn').addEventListener('click', () => selectTrack(currentTrackIdx + 1, true));
+    trackRows.forEach((row, idx) => {
+      row.addEventListener('click', () => selectTrack(idx, true));
+    });
+
+    // Modal Events
+    const modal = document.getElementById('settingsModal');
+    function openSettings() {
+      document.getElementById('inputSpotifyUrl').value = config.spotifyUrl || '';
+      document.getElementById('inputTitle').value = config.title || '';
+      document.getElementById('inputAuthor').value = config.author || '';
+      document.getElementById('inputCoverUrl').value = config.cover || '';
+      const bg = config.bg || '#282828';
+      const text = config.text || '#ffffff';
+      document.getElementById('pickerBg').value = bg;
+      document.getElementById('hexBg').value = bg;
+      document.getElementById('pickerText').value = text;
+      document.getElementById('hexText').value = text;
+      modal.classList.add('active');
+    }
+
+    document.getElementById('openSettingsBtn').addEventListener('click', openSettings);
+    document.getElementById('moreBtn').addEventListener('click', openSettings);
+    document.getElementById('closeSettingsBtn').addEventListener('click', () => modal.classList.remove('active'));
+
+    document.getElementById('saveBtn').addEventListener('click', () => {
+      config = {
+        spotifyUrl: document.getElementById('inputSpotifyUrl').value.trim() || DEFAULTS.spotifyUrl,
+        title: document.getElementById('inputTitle').value.trim() || DEFAULTS.title,
+        author: document.getElementById('inputAuthor').value.trim() || DEFAULTS.author,
+        cover: document.getElementById('inputCoverUrl').value.trim() || DEFAULTS.cover,
+        bg: normalizeHex(document.getElementById('hexBg').value) || '#282828',
+        text: normalizeHex(document.getElementById('hexText').value) || '#ffffff'
+      };
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(config)); } catch (e) {}
+      applyConfig(config);
+      modal.classList.remove('active');
+    });
+
+    function copyTextFallback(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).catch(() => {});
+      }
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+
+    document.getElementById('copyUrlBtn').addEventListener('click', () => {
+      const params = new URLSearchParams();
+      const bg = (normalizeHex(document.getElementById('hexBg').value) || '#282828').replace('#', '');
+      const text = (normalizeHex(document.getElementById('hexText').value) || '#ffffff').replace('#', '');
+      params.set('bg', bg);
+      params.set('text', text);
+
+      const sp = document.getElementById('inputSpotifyUrl').value.trim();
+      const ti = document.getElementById('inputTitle').value.trim();
+      const au = document.getElementById('inputAuthor').value.trim();
+      const co = document.getElementById('inputCoverUrl').value.trim();
+      if (sp && sp !== DEFAULTS.spotifyUrl) params.set('spotify', sp);
+      if (ti && ti !== DEFAULTS.title) params.set('title', ti);
+      if (au && au !== DEFAULTS.author) params.set('author', au);
+      if (co && co !== DEFAULTS.cover) params.set('cover', co);
+
+      const fullUrl = `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+      copyTextFallback(fullUrl);
+      const btn = document.getElementById('copyUrlBtn');
+      btn.textContent = '✓ Copied URL!';
+      setTimeout(() => btn.textContent = '📋 Copy Template URL', 1800);
+    });
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+      config = getActiveConfig();
+      config.bg = null;
+      config.text = null;
+      applyConfig(config);
+      modal.classList.remove('active');
+    });
+  </script>
+</body>
+</html>
